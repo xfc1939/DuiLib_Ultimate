@@ -12,12 +12,12 @@ namespace DuiLib
 		, public IQueryControlText
 	{
 	public:
-		WindowImplBase(){};
-		virtual ~WindowImplBase(){};
-		// Ö»ĞèÖ÷´°¿ÚÖØĞ´£¨³õÊ¼»¯×ÊÔ´Óë¶àÓïÑÔ½Ó¿Ú£©
-		virtual void InitResource(){};
-		// Ã¿¸ö´°¿Ú¶¼¿ÉÒÔÖØĞ´
-		virtual void InitWindow(){};
+		WindowImplBase();
+		virtual ~WindowImplBase();
+		// åªéœ€ä¸»çª—å£é‡å†™ï¼ˆåˆå§‹åŒ–èµ„æºä¸å¤šè¯­è¨€æ¥å£ï¼‰
+		virtual void InitResource();
+		// æ¯ä¸ªçª—å£éƒ½å¯ä»¥é‡å†™
+		virtual void InitWindow();
 		virtual void OnFinalMessage( HWND hWnd );
 		virtual void Notify(TNotifyUI& msg);
 
@@ -26,10 +26,10 @@ namespace DuiLib
 		virtual BOOL IsInStaticControl(CControlUI *pControl);
 
 	protected:
-		virtual CDuiString GetSkinType() { return _T(""); }
+		virtual CDuiString GetSkinType();
 		virtual CDuiString GetSkinFile() = 0;
 		virtual LPCTSTR GetWindowClassName(void) const = 0 ;
-		virtual LPCTSTR GetManagerName() { return NULL; }
+		virtual LPCTSTR GetManagerName();
 		virtual LRESULT ResponseDefaultKeyEvent(WPARAM wParam);
 		CPaintManagerUI m_pm;
 

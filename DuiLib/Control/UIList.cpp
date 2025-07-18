@@ -20,7 +20,7 @@ namespace DuiLib {
 		Add(m_pHeader);
 		Add(m_pList);
 
-		// ÁÐ±íÅäÖÃ
+		// ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½
 		m_ListInfo.nColumns = 0;
 		m_ListInfo.nFont = -1;
 		m_ListInfo.uTextStyle = DT_VCENTER | DT_SINGLELINE;
@@ -448,18 +448,18 @@ namespace DuiLib {
 
 	bool CListUI::SelectItem(int iIndex, bool bTakeFocus)
 	{
-		// ÖØÖÃ¶àÑ¡ÆðÊ¼ÐòºÅ
+		// ï¿½ï¿½ï¿½Ã¶ï¿½Ñ¡ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½
 		m_iFirstSel = -1;
-		// È¡ÏûÆäËüÑ¡ÔñÏî
+		// È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½
 		UnSelectItem(iIndex, true);
-		// ÅÐ¶ÏÊÇ·ñºÏ·¨ÁÐ±íÏî
+		// ï¿½Ð¶ï¿½ï¿½Ç·ï¿½Ï·ï¿½ï¿½Ð±ï¿½ï¿½ï¿½
 		if (iIndex < 0) return false;
-		// ÒÑ¾­Ñ¡Ôñ
+		// ï¿½Ñ¾ï¿½Ñ¡ï¿½ï¿½
 		int aIndex = m_aSelItems.Find((LPVOID)iIndex);
 		if (aIndex != -1) {
 			return true;
 		}
-		// Ñ¡Ôñµ±Ç°ÁÐ±íÏî
+		// Ñ¡ï¿½ï¿½Ç°ï¿½Ð±ï¿½ï¿½ï¿½
 		CControlUI* pControl = GetItemAt(iIndex);
 		if (pControl == NULL) return false;
 		IListItemUI* pListItem = static_cast<IListItemUI*>(pControl->GetInterface(_T("ListItem")));
@@ -469,7 +469,7 @@ namespace DuiLib {
 		}
 		int iLastSel = m_iCurSel;
 		m_iCurSel = iIndex;
-		//Èç¹ûÒÑ¾­Ñ¡ÖÐÁË¾ÍÎÞÐèÒªÔÙÖØ¸´¼ÓÈëby nakkler
+		//ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ñ¡ï¿½ï¿½ï¿½Ë¾ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½by nakkler
 		if(m_aSelItems.Find((LPVOID)iIndex)==-1)
             m_aSelItems.Add((LPVOID)iIndex);
 
@@ -485,15 +485,15 @@ namespace DuiLib {
 
 	bool CListUI::SelectMultiItem(int iIndex, bool bTakeFocus)
 	{
-		// Î´¿ªÆô¶àÑ¡
+		// Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡
 		if (!IsMultiSelect()) return SelectItem(iIndex, bTakeFocus);
-		// È«²¿È¡Ïû
+		// È«ï¿½ï¿½È¡ï¿½ï¿½
 		if (iIndex < 0) {
 			UnSelectAllItems();
 			return true;
 		}
 
-		// ¶àÑ¡ÆðÊ¼ÐòºÅ
+		// ï¿½ï¿½Ñ¡ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½
 		if (m_iFirstSel == -1) {
 			if (m_iCurSel != -1) {
 				m_iFirstSel = m_iCurSel;
@@ -509,7 +509,7 @@ namespace DuiLib {
 		IListItemUI* pListItem = static_cast<IListItemUI*>(pControl->GetInterface(_T("ListItem")));
 		if (pListItem == NULL) return false;
 
-		// ¶àÑ¡ÅÐ¶Ï
+		// ï¿½ï¿½Ñ¡ï¿½Ð¶ï¿½
 		if ((GetKeyState(VK_CONTROL) & 0x8000)) {
 			int aIndex = m_aSelItems.Find((LPVOID)iIndex);
 			if (aIndex != -1) {
@@ -1478,7 +1478,7 @@ namespace DuiLib {
 		}
 		UINT uListType = m_pOwner->GetListType();
 		if (uListType == LT_LIST) {
-			// ¼ÆËãºáÏò³ß´ç
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß´ï¿½
 			int nItemCount = m_items.GetSize();
 			if (nItemCount > 0)
 			{
@@ -2216,7 +2216,7 @@ namespace DuiLib {
 	bool CListElementUI::Select(bool bSelect)
 	{
 		if (!IsEnabled()) return false;
-		// È¡ÏûÆäËüÁÐ±íÏîÊý¾Ý
+		// È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		if (m_pOwner) {
 			m_pOwner->UnSelectItem(m_iIndex, true);
 		}
@@ -2383,13 +2383,13 @@ namespace DuiLib {
 			return;
 		}
 
-		// ÓÒ¼üÑ¡Ôñ
+		// ï¿½Ò¼ï¿½Ñ¡ï¿½ï¿½
 		if (m_pOwner != NULL)
 		{
 			if (m_pOwner->GetListInfo()->bRSelected && event.Type == UIEVENT_RBUTTONDOWN)
 			{
 				if (IsEnabled()) {
-					// ¶àÑ¡
+					// ï¿½ï¿½Ñ¡
 					if ((GetKeyState(VK_CONTROL) & 0x8000) || (GetKeyState(VK_SHIFT) & 0x8000)) {
 						if (m_pOwner != NULL) m_pOwner->SelectMultiItem(m_iIndex);
 					}
@@ -2406,7 +2406,7 @@ namespace DuiLib {
 			if (IsEnabled()) {
 				if(IsRichEvent()) m_pManager->SendNotify(this, DUI_MSGTYPE_BUTTONDOWN);
 
-				// ¶àÑ¡
+				// ï¿½ï¿½Ñ¡
 				if ((GetKeyState(VK_CONTROL) & 0x8000) || (GetKeyState(VK_SHIFT) & 0x8000)) {
 					if (m_pOwner != NULL) m_pOwner->SelectMultiItem(m_iIndex);
 				}
@@ -2858,7 +2858,7 @@ namespace DuiLib {
 	bool CListContainerElementUI::Select(bool bSelect)
 	{
 		if (!IsEnabled()) return false;
-		// È¡ÏûÆäËüÁÐ±íÏîÊý¾Ý
+		// È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		if (m_pOwner) {
 			m_pOwner->UnSelectItem(m_iIndex, true);
 		}
@@ -2923,7 +2923,7 @@ namespace DuiLib {
 			if (IsEnabled()) {
 				if(IsRichEvent()) m_pManager->SendNotify(this, DUI_MSGTYPE_BUTTONDOWN);
 
-				// ¶àÑ¡
+				// ï¿½ï¿½Ñ¡
 				if ((GetKeyState(VK_CONTROL) & 0x8000) || (GetKeyState(VK_SHIFT) & 0x8000)) {
 					if (m_pOwner != NULL) m_pOwner->SelectMultiItem(m_iIndex);
 				}
@@ -2933,13 +2933,13 @@ namespace DuiLib {
 			}
 			return;
 		}
-		// ÓÒ¼üÑ¡Ôñ
+		// ï¿½Ò¼ï¿½Ñ¡ï¿½ï¿½
 		if (m_pOwner != NULL)
 		{
 			if (m_pOwner->GetListInfo()->bRSelected && event.Type == UIEVENT_RBUTTONDOWN)
 			{
 				if (IsEnabled()) {
-					// ¶àÑ¡
+					// ï¿½ï¿½Ñ¡
 					if ((GetKeyState(VK_CONTROL) & 0x8000) || (GetKeyState(VK_SHIFT) & 0x8000)) {
 						if (m_pOwner != NULL) m_pOwner->SelectMultiItem(m_iIndex);
 					}
@@ -3042,7 +3042,7 @@ namespace DuiLib {
 			pInfo->nFont, pInfo->uTextStyle);
 	}
 
-	void CListContainerElementUI::DrawItemBk(HDC hDC, const RECT& rcItem)
+	void CListContainerElementUI::DrawItemBk(HDC hDC, const RECT& rcItem, int topRadius, int bottomRadius)
 	{
 		ASSERT(m_pOwner);
 		if (m_pOwner == NULL) return;
@@ -3065,7 +3065,7 @@ namespace DuiLib {
 			iBackColor = pInfo->dwDisabledBkColor;
 		}
 		if (iBackColor != 0) {
-			CRenderEngine::DrawColor(hDC, m_rcItem, GetAdjustColor(iBackColor));
+			CRenderEngine::DrawColor(hDC, m_rcItem, GetAdjustColor(iBackColor), topRadius, bottomRadius);
 		}
 
 		if (!IsEnabled()) {

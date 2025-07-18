@@ -206,6 +206,9 @@
     <ClCompile Include="Control\UIPageControl.cpp">
       <Filter>Source Files\Control</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\NormalizedSizeDPI.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StdAfx.h">
@@ -399,6 +402,9 @@
     </ClInclude>
     <ClInclude Include="Control\UIPageControl.h">
       <Filter>Header Files\Control</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\NormalizedSizeDPI.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

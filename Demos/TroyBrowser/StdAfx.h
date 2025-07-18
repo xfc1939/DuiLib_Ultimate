@@ -29,6 +29,7 @@ using namespace DuiLib;
 #   endif
 #endif
 
+
 #ifdef _DEBUG
 #   ifdef _UNICODE
 #       pragma comment(lib, "lib\\TroyControls_d.lib")

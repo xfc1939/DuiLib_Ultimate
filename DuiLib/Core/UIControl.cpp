@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "UIControl.h"
 
 namespace DuiLib {
 	IMPLEMENT_DUICONTROL(CControlUI)
@@ -33,8 +34,10 @@ namespace DuiLib {
 		m_nBorderSize(0),
 		m_nBorderStyle(PS_SOLID),
 		m_nTooltipWidth(300),
+		m_nBkRadius(0),
 		m_wCursor(0),
-		m_instance(NULL)
+		m_instance(NULL),
+		m_bBorderWithFill(false)
 	{
 		m_cXY.cx = m_cXY.cy = 0;
 		m_cxyFixed.cx = m_cxyFixed.cy = 0;
@@ -168,6 +171,14 @@ namespace DuiLib {
 		m_bDropEnabled = bDrop;
 	}
 
+	void CControlUI::SetBorderWithFill(bool border_with_fill)
+	{
+		m_bBorderWithFill = border_with_fill;
+	}
+
+	bool CControlUI::IsBorderWithFill()const {
+		return m_bBorderWithFill;
+	}
 
 	bool CControlUI::IsRichEvent() const
 	{
@@ -349,9 +360,22 @@ namespace DuiLib {
 		Invalidate();
 	}
 
+	int CControlUI::GetBkRadius() const
+	{
+		int nBkRadius = m_nBkRadius;
+		if (m_pManager != NULL) nBkRadius = m_pManager->GetDPIObj()->Scale(nBkRadius);
+		return nBkRadius;
+	}
+
+	void CControlUI::SetBkRadius(int radius)
+	{
+		m_nBkRadius = radius;
+		Invalidate();
+	}
+
 	bool CControlUI::DrawImage(HDC hDC, LPCTSTR pStrImage, LPCTSTR pStrModify)
 	{
-		return CRenderEngine::DrawImageString(hDC, m_pManager, m_rcItem, m_rcPaint, pStrImage, pStrModify, m_instance);
+		return CRenderEngine::DrawImageString(hDC, m_pManager, m_rcItem, m_rcPaint, pStrImage, pStrModify, m_instance, GetBkRadius());
 	}
 
 	const RECT& CControlUI::GetPos() const
@@ -1102,6 +1126,8 @@ namespace DuiLib {
 			cxyRound.cx = _tcstol(pstrValue, &pstr, 10);  ASSERT(pstr);    
 			cxyRound.cy = _tcstol(pstr + 1, &pstr, 10);    ASSERT(pstr);
 			SetBorderRound(cxyRound);
+		} else if (_tcsicmp(pstrName, _T("bkradius")) == 0) {		
+			SetBkRadius(_ttoi(pstrValue));
 		}
 		else if( _tcsicmp(pstrName, _T("bkimage")) == 0 ) SetBkImage(pstrValue);
 		else if( _tcsicmp(pstrName, _T("foreimage")) == 0 ) SetForeImage(pstrValue);
@@ -1114,6 +1140,7 @@ namespace DuiLib {
 		else if( _tcsicmp(pstrName, _T("name")) == 0 ) SetName(pstrValue);
 		else if( _tcsicmp(pstrName, _T("drag")) == 0 ) SetDragEnable(_tcsicmp(pstrValue, _T("true")) == 0);
 		else if( _tcsicmp(pstrName, _T("drop")) == 0 ) SetDropEnable(_tcsicmp(pstrValue, _T("true")) == 0);
+		else if (_tcsicmp(pstrName, _T("board_with_fill")) == 0) SetBorderWithFill(_tcsicmp(pstrValue, _T("true")) == 0);
 		else if( _tcsicmp(pstrName, _T("resourcetext")) == 0 ) SetResourceText(_tcsicmp(pstrValue, _T("true")) == 0);
 		else if( _tcsicmp(pstrName, _T("richevent")) == 0 ) SetRichEvent(_tcsicmp(pstrValue, _T("true")) == 0);
 		else if( _tcsicmp(pstrName, _T("text")) == 0 ) SetText(pstrValue);
@@ -1227,15 +1254,28 @@ namespace DuiLib {
 		RECT rcBorderSize = GetBorderRectSize();
 
 		if( cxyBorderRound.cx > 0 || cxyBorderRound.cy > 0 ) {
-			CRenderClip roundClip;
-			CRenderClip::GenerateRoundClip(hDC, m_rcPaint,  m_rcItem, cxyBorderRound.cx, cxyBorderRound.cy, roundClip);
-			PaintBkColor(hDC);
-			PaintBkImage(hDC);
-			PaintStatusImage(hDC);
-			PaintForeColor(hDC);
-			PaintForeImage(hDC);
-			PaintText(hDC);
-			PaintBorder(hDC);
+			if (!IsBorderWithFill()) {
+				CRenderClip roundClip;
+				CRenderClip::GenerateRoundClip(hDC, m_rcPaint, m_rcItem, cxyBorderRound.cx, cxyBorderRound.cy, roundClip);
+				PaintBkColor(hDC);
+				PaintBkImage(hDC);
+				PaintStatusImage(hDC);
+				PaintForeColor(hDC);
+				PaintForeImage(hDC);
+				PaintText(hDC);
+				PaintBorder(hDC);
+			}
+			else {
+				PaintBkColor(hDC);
+				PaintBkImage(hDC);
+				PaintStatusImage(hDC);
+				PaintForeColor(hDC);
+				PaintForeImage(hDC);
+				PaintText(hDC);
+				PaintBorder(hDC);
+			}
+	
+			
 		}
 		else {
 			PaintBkColor(hDC);
@@ -1251,23 +1291,27 @@ namespace DuiLib {
 
 	void CControlUI::PaintBkColor(HDC hDC)
 	{
+		if (IsBorderWithFill()) {
+			return;
+		}
+
 		if( m_dwBackColor != 0 ) {
 			bool bVer = (m_sGradient.CompareNoCase(_T("hor")) != 0);
 			if( m_dwBackColor2 != 0 ) {
 				if( m_dwBackColor3 != 0 ) {
 					RECT rc = m_rcItem;
 					rc.bottom = (rc.bottom + rc.top) / 2;
-					CRenderEngine::DrawGradient(hDC, rc, GetAdjustColor(m_dwBackColor), GetAdjustColor(m_dwBackColor2), bVer, 8);
+					CRenderEngine::GdiplusDrawGradient(hDC, rc, GetAdjustColor(m_dwBackColor), GetAdjustColor(m_dwBackColor2), bVer, m_nBkRadius);
 					rc.top = rc.bottom;
 					rc.bottom = m_rcItem.bottom;
-					CRenderEngine::DrawGradient(hDC, rc, GetAdjustColor(m_dwBackColor2), GetAdjustColor(m_dwBackColor3), bVer, 8);
+					CRenderEngine::GdiplusDrawGradient(hDC, rc, GetAdjustColor(m_dwBackColor2), GetAdjustColor(m_dwBackColor3), bVer, m_nBkRadius);
 				}
 				else {
-					CRenderEngine::DrawGradient(hDC, m_rcItem, GetAdjustColor(m_dwBackColor), GetAdjustColor(m_dwBackColor2), bVer, 16);
+					CRenderEngine::GdiplusDrawGradient(hDC, m_rcItem, GetAdjustColor(m_dwBackColor), GetAdjustColor(m_dwBackColor2), bVer, m_nBkRadius);
 				}
 			}
-			else if( m_dwBackColor >= 0xFF000000 ) CRenderEngine::DrawColor(hDC, m_rcPaint, GetAdjustColor(m_dwBackColor));
-			else CRenderEngine::DrawColor(hDC, m_rcItem, GetAdjustColor(m_dwBackColor));
+			else if( m_dwBackColor >= 0xFF000000 ) CRenderEngine::DrawColor(hDC, m_rcItem, m_rcPaint, GetAdjustColor(m_dwBackColor), m_nBkRadius);
+			else CRenderEngine::DrawColor(hDC, m_rcItem, m_rcItem, GetAdjustColor(m_dwBackColor), m_nBkRadius);
 		}
 	}
 
@@ -1307,10 +1351,16 @@ namespace DuiLib {
 		if(m_dwBorderColor != 0 || m_dwFocusBorderColor != 0) {
 			//画圆角边框
 			if(nBorderSize > 0 && ( cxyBorderRound.cx > 0 || cxyBorderRound.cy > 0 )) {
-				if (IsFocused() && m_dwFocusBorderColor != 0)
-					CRenderEngine::DrawRoundRect(hDC, m_rcItem, nBorderSize, cxyBorderRound.cx, cxyBorderRound.cy, GetAdjustColor(m_dwFocusBorderColor), m_nBorderStyle);
-				else
+				if (IsFocused() && m_dwFocusBorderColor != 0) {
+					CRenderEngine::DrawRoundRect(hDC, m_rcItem, nBorderSize, cxyBorderRound.cx, cxyBorderRound.cy, GetAdjustColor(m_dwFocusBorderColor), m_nBorderStyle);	
+				}
+				else if (IsBorderWithFill()) {
+					CRenderEngine::DrawRoundRectWithFill(hDC, m_rcItem, nBorderSize, cxyBorderRound.cx, cxyBorderRound.cy, GetAdjustColor(m_dwBorderColor), GetAdjustColor(m_dwBackColor), m_nBorderStyle);
+				}
+				else {
 					CRenderEngine::DrawRoundRect(hDC, m_rcItem, nBorderSize, cxyBorderRound.cx, cxyBorderRound.cy, GetAdjustColor(m_dwBorderColor), m_nBorderStyle);
+
+				}
 			}
 			else {
 				if (IsFocused() && m_dwFocusBorderColor != 0 && nBorderSize > 0) { 
@@ -1360,6 +1410,11 @@ namespace DuiLib {
 		if(m_pManager != NULL) m_pManager->GetDPIObj()->Scale(&rcBorderSize);
 
 		return rcBorderSize.left;
+	}
+
+	void CControlUI::SetAlign(LPCTSTR align_value)
+	{
+
 	}
 
 	void CControlUI::SetLeftBorderSize( int nSize )

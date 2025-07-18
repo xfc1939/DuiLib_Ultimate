@@ -166,6 +166,9 @@ namespace DuiLib
 		else if( uMsg == WM_KEYDOWN && TCHAR(wParam) == VK_RETURN ){
 			m_pOwner->GetManager()->SendNotify(m_pOwner, DUI_MSGTYPE_RETURN);
 		}
+		else if (uMsg == WM_KEYDOWN && TCHAR(wParam) == VK_BACK) {
+			m_pOwner->GetManager()->SendNotify(m_pOwner, DUI_MSGTYPE_BACK);
+		}
 		else if( uMsg == WM_KEYDOWN && TCHAR(wParam) == VK_TAB ){
 			if (m_pOwner->GetManager()->IsLayered()) {
 				m_pOwner->GetManager()->SetNextTabControl();
@@ -290,7 +293,9 @@ namespace DuiLib
 		}
 		if( event.Type == UIEVENT_SETFOCUS && IsEnabled() ) 
 		{
-			if( m_pWindow ) return;
+			if (m_pWindow) {
+				return;
+			}
 			m_pWindow = new CEditWnd();
 			ASSERT(m_pWindow);
 			m_pWindow->Init(this);
@@ -714,6 +719,14 @@ namespace DuiLib
 		else {
 			CRenderEngine::DrawText(hDC, m_pManager, rc, sDrawText, m_dwDisabledTextColor, \
 				m_iFont, DT_SINGLELINE | m_uTextStyle);
+		}
+	}
+
+	void CEditUI::SetFocus()
+	{
+		CControlUI::SetFocus();
+		if (m_pWindow && m_pWindow->GetHWND()) {
+			::SetFocus(m_pWindow->GetHWND());
 		}
 	}
 }

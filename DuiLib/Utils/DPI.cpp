@@ -28,6 +28,8 @@ namespace DuiLib
 
 
 	CDPI::CDPI()
+		:m_paintWindowSize{ 0,0 }
+		,m_paintWindowInitSize{0,0}
 	{
 		m_nScaleFactor = 0;
 		m_nScaleFactorSDA = 0;
@@ -231,4 +233,15 @@ namespace DuiLib
 		szScale.cy = Scale(szSize.cy);
 		return szScale;
 	}
+
+	void CDPI::SetPaintWindowSize(const SIZE& size)
+	{
+		m_paintWindowSize = size;
+	}
+
+	void CDPI::SetPaintWindowInitSize(const SIZE& size)
+	{
+		m_paintWindowInitSize = size;
+	}
+
 }

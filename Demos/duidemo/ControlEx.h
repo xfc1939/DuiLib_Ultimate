@@ -23,7 +23,7 @@ public:
 	void PaintForeColor(HDC hDC)
 	{
 		Gdiplus::Graphics g(hDC);
-		g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);//¿¹¾â³İ
+		g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);//Â¿Â¹Â¾Ã¢Â³Ã
 
 		RECT rcPos = GetPos();
 		

@@ -36,12 +36,16 @@ namespace DuiLib {
 		bool IsWordWrap();
 		void SetWordWrap(bool bWordWrap = true);
 		int GetFont();
+		int GetTipFont();
 		void SetFont(int index);
+		void SetTipFont(int index);
 		void SetFont(LPCTSTR pStrFontName, int nSize, bool bBold, bool bUnderline, bool bItalic);
 		LONG GetWinStyle();
 		void SetWinStyle(LONG lStyle);
 		DWORD GetTextColor();
 		void SetTextColor(DWORD dwTextColor);
+		DWORD GetDisabledTextColor();
+		void SetDisabledTextColor(DWORD dwDisabledTextColor);
 		int GetLimitText();
 		void SetLimitText(int iChars);
 		long GetTextLength(DWORD dwFlags = GTL_DEFAULT) const;
@@ -124,8 +128,8 @@ namespace DuiLib {
 
 		void DoInit();
 		bool SetDropAcceptFile(bool bAccept);
-		// ×¢Òâ£ºTxSendMessageºÍSendMessageÊÇÓĞÇø±ğµÄ£¬TxSendMessageÃ»ÓĞmultibyteºÍunicode×Ô¶¯×ª»»µÄ¹¦ÄÜ£¬
-		// ¶ørichedit2.0ÄÚ²¿ÊÇÒÔunicodeÊµÏÖµÄ£¬ÔÚmultibyte³ÌĞòÖĞ£¬±ØĞë×Ô¼º´¦Àíunicodeµ½multibyteµÄ×ª»»
+		// æ³¨æ„ï¼šTxSendMessageå’ŒSendMessageæ˜¯æœ‰åŒºåˆ«çš„ï¼ŒTxSendMessageæ²¡æœ‰multibyteå’Œunicodeè‡ªåŠ¨è½¬æ¢çš„åŠŸèƒ½ï¼Œ
+		// è€Œrichedit2.0å†…éƒ¨æ˜¯ä»¥unicodeå®ç°çš„ï¼Œåœ¨multibyteç¨‹åºä¸­ï¼Œå¿…é¡»è‡ªå·±å¤„ç†unicodeåˆ°multibyteçš„è½¬æ¢
 		virtual HRESULT TxSendMessage(UINT msg, WPARAM wparam, LPARAM lparam, LRESULT *plresult) const; 
 		IDropTarget* GetTxDropTarget();
 		virtual bool OnTxViewChanged();
@@ -156,6 +160,8 @@ namespace DuiLib {
 
 		LRESULT MessageHandler(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bHandled);
 
+		void SetPasswordChar(WCHAR c);
+		void SetAlign(LPCTSTR align_value) override;
 	protected:
 		enum { 
 			DEFAULT_TIMERID = 20,
@@ -171,7 +177,9 @@ namespace DuiLib {
 		bool m_bReadOnly;
 		bool m_bWordWrap;
 		DWORD m_dwTextColor;
+		DWORD m_dwDisabledTextColor;
 		int m_iFont;
+		int m_iTipFont;
 		int m_iLimitText;
 		LONG m_lTwhStyle;
 		bool m_bDrawCaret;

@@ -34,6 +34,8 @@ namespace DuiLib
 		void SetAttribute(LPCTSTR pstrName, LPCTSTR pstrValue);
 
 		void PaintText(HDC hDC);
+		// left¡¢center¡¢right
+		void SetAlign(LPCTSTR align_value) override;
 
 		virtual bool GetAutoCalcWidth() const;
 		virtual void SetAutoCalcWidth(bool bAutoCalcWidth);

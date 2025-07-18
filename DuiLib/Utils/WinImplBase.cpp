@@ -15,6 +15,8 @@ namespace DuiLib
 		m_pm.ReapObjects(m_pm.GetRoot());
 	}
 
+	LPCTSTR WindowImplBase::GetManagerName() { return NULL; }
+
 	LRESULT WindowImplBase::ResponseDefaultKeyEvent(WPARAM wParam)
 	{
 		if (wParam == VK_RETURN)
@@ -71,6 +73,10 @@ namespace DuiLib
 		bHandled = FALSE;
 		return 0;
 	}
+	WindowImplBase::WindowImplBase() {}
+	WindowImplBase::~WindowImplBase() {}
+	void WindowImplBase::InitResource() {}
+	void WindowImplBase::InitWindow() {}
 
 #if defined(WIN32) && !defined(UNDER_CE)
 	LRESULT WindowImplBase::OnNcActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -135,6 +141,9 @@ namespace DuiLib
 
 		return bRet;
 	}
+
+
+	CDuiString WindowImplBase::GetSkinType() { return _T(""); }
 
 	LRESULT WindowImplBase::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
@@ -254,6 +263,7 @@ namespace DuiLib
 				pControl = static_cast<CControlUI*>(m_pm.FindControl(_T("restorebtn")));
 				if (pControl) pControl->SetVisible(false);
 			}
+			m_pm.GetDPIObj()->SetPaintWindowSize(SIZE{ rcWnd.right, rcWnd.bottom });
 		}
 #endif
 		bHandled = FALSE;
@@ -299,22 +309,23 @@ namespace DuiLib
 
 	LRESULT WindowImplBase::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
-		// µ÷Õû´°¿ÚÑùÊ½
+		// è°ƒæ•´çª—å£æ ·å¼
 		LONG styleValue = ::GetWindowLong(*this, GWL_STYLE);
 		styleValue &= ~WS_CAPTION;
 		::SetWindowLong(*this, GWL_STYLE, styleValue | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 
-		// ¹ØÁªUI¹ÜÀíÆ÷
+		// å…³è”UIç®¡ç†å™¨
 		m_pm.Init(m_hWnd, GetManagerName());
-		// ×¢²áPreMessage»Øµ÷
+		// æ³¨å†ŒPreMessageå›è°ƒ
 		m_pm.AddPreMessageFilter(this);
 
-		// ´´½¨Ö÷´°¿Ú
+		// åˆ›å»ºä¸»çª—å£
 		CControlUI* pRoot=NULL;
 		CDialogBuilder builder;
 		CDuiString sSkinType = GetSkinType();
 		if (!sSkinType.IsEmpty()) {
-			STRINGorID xml(_ttoi(GetSkinFile().GetData()));
+			/*STRINGorID xml(_ttoi(GetSkinFile().GetData()));*/
+			STRINGorID xml((GetSkinFile().GetData()));
 			pRoot = builder.Create(xml, sSkinType, this, &m_pm);
 		}
 		else {
@@ -322,16 +333,16 @@ namespace DuiLib
 		}
 
 		if (pRoot == NULL) {
-			CDuiString sError = _T("¼ÓÔØ×ÊÔ´ÎÄ¼şÊ§°Ü£º");
+			CDuiString sError = _T("åŠ è½½èµ„æºæ–‡ä»¶å¤±è´¥ï¼š");
 			sError += GetSkinFile();
 			MessageBox(NULL, sError, _T("Duilib") ,MB_OK|MB_ICONERROR);
 			ExitProcess(1);
 			return 0;
 		}
 		m_pm.AttachDialog(pRoot);
-		// Ìí¼ÓNotifyÊÂ¼ş½Ó¿Ú
+		// æ·»åŠ Notifyäº‹ä»¶æ¥å£
 		m_pm.AddNotifier(this);
-		// ´°¿Ú³õÊ¼»¯Íê±Ï
+		// çª—å£åˆå§‹åŒ–å®Œæ¯•
 		InitWindow();
 		return 0;
 	}

@@ -31,8 +31,12 @@ namespace DuiLib {
 
 	class UILIB_API CRenderEngine
 	{
+
+	private:
+		static Gdiplus::Rect RECT2GdiplusRect(const RECT& rc);
+
 	public:
-		// Í¼Æ¬¼ÓÔØ
+		// Í¼Æ¬ï¿½ï¿½ï¿½ï¿½
 #ifdef USE_XIMAGE_EFFECT
 		static CxImage *LoadGifImageX(STRINGorID bitmap, LPCTSTR type = NULL, DWORD mask = 0);
 #endif
@@ -42,28 +46,33 @@ namespace DuiLib {
 		static TImageInfo* LoadImage(UINT nID, LPCTSTR type = NULL, DWORD mask = 0, HINSTANCE instance = NULL);
 
 		static void DrawImage(HDC hDC, HBITMAP hBitmap, const RECT& rc, const RECT& rcPaint, const RECT& rcBmpPart, const RECT& rcCorners, bool bAlpha, UINT uFade = 255, bool hole = false, bool xtiled = false, bool ytiled = false);
-		static bool DrawImageInfo(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, const TDrawInfo* pDrawInfo, HINSTANCE instance = NULL);
-		static bool DrawImageString(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, LPCTSTR pStrImage, LPCTSTR pStrModify = NULL, HINSTANCE instance = NULL);
+		static bool DrawImageInfo(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, const TDrawInfo* pDrawInfo, HINSTANCE instance = NULL, int bkradius = 0);
+		static bool DrawImageString(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, LPCTSTR pStrImage, LPCTSTR pStrModify = NULL, HINSTANCE instance = NULL, int bkradius = 0);
 
-		// Gdiplus»æÖÆ
+		// Gdiplusï¿½ï¿½ï¿½ï¿½
 		static TImageInfo* GdiplusLoadImage(STRINGorID bitmap, LPCTSTR type = NULL, DWORD mask = 0, HINSTANCE instance = NULL);
-		static void GdiplusDrawImage(HDC hDC, Gdiplus::Image* image, const RECT& rc, const RECT& rcPaint, const RECT& rcBmpPart, bool bAlpha, UINT uFade = 255, UINT uRotate = 0);
+		static void GdiplusDrawImage(HDC hDC, Gdiplus::Image* image, const RECT& rc, const RECT& rcPaint, const RECT& rcBmpPart, bool bAlpha, UINT uFade = 255, UINT uRotate = 0, int bkradius = 0);
 		static void GdiplusDrawText(HDC hDC, CPaintManagerUI* pManager, RECT& rc, LPCTSTR pstrText, DWORD dwTextColor, int iFont, UINT uStyle);
 
-		// ÒÔÏÂº¯ÊýÖÐµÄÑÕÉ«²ÎÊýalphaÖµÎÞÐ§
-		// Í¼Ôª»æÖÆ
+		// ï¿½ï¿½ï¿½Âºï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½alphaÖµï¿½ï¿½Ð§
+		// Í¼Ôªï¿½ï¿½ï¿½ï¿½
 		static void DrawColor(HDC hDC, const RECT& rc, DWORD color);
+		// è®¾ç½®é¡¶éƒ¨åœ†è§’å’Œåº•éƒ¨åœ†è§’å€¼
+		static void DrawColor(HDC hDC, const RECT& rc, DWORD color, const int topRadius, const int bottomRadius);
+		static void DrawColor(HDC hdc, const RECT& rcItem, const RECT& rcPaint, DWORD color, const int radius);
 		static void DrawGradient(HDC hDC, const RECT& rc, DWORD dwFirst, DWORD dwSecond, bool bVertical, int nSteps);
+		static void GdiplusDrawGradient(HDC hDC, const RECT& rc, DWORD dwFirst, DWORD dwSecond, bool bVertical, int radius);
 		static void DrawLine(HDC hDC, const RECT& rc, int nSize, DWORD dwPenColor,int nStyle = PS_SOLID);
 		static void DrawRect(HDC hDC, const RECT& rc, int nSize, DWORD dwPenColor,int nStyle = PS_SOLID);
-		static void DrawRoundRect(HDC hDC, const RECT& rc, int width, int height, int nSize, DWORD dwPenColor,int nStyle = PS_SOLID);
+		static void DrawRoundRect(HDC hDC, const RECT& rc, int nSize, int width, int height, DWORD dwPenColor, int nStyle = PS_SOLID);
+		static void DrawRoundRectWithFill(HDC hDC, const RECT& rc, int nSize, int width, int height, DWORD dwPenColor, DWORD dwFillColor, int nStyle = PS_SOLID);
 
-		// ×ÖÌå»æÖÆ
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		static void DrawText(HDC hDC, CPaintManagerUI* pManager, RECT& rc, LPCTSTR pstrText,DWORD dwTextColor, int iFont, UINT uStyle, DWORD dwTextBKColor);
 		static void DrawText(HDC hDC, CPaintManagerUI* pManager, RECT& rc, LPCTSTR pstrText, DWORD dwTextColor, int iFont, UINT uStyle);
 		static void DrawHtmlText(HDC hDC, CPaintManagerUI* pManager, RECT& rc, LPCTSTR pstrText, DWORD dwTextColor, RECT* pLinks, CDuiString* sLinks, int& nLinkRects, int iFont, UINT uStyle);
 
-		// ¸¨Öúº¯Êý
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		static void CheckAlphaColor(DWORD& dwColor);
 		static DWORD AdjustColor(DWORD dwColor, short H, short S, short L);
 

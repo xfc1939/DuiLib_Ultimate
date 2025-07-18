@@ -127,14 +127,14 @@ namespace DuiLib
 			m_bNeedEstimateSize = false;
 			m_szAvailableLast = szAvailable;
 			m_cxyFixedLast = GetFixedSize();
-			// 自动计算宽度
+			// 鑷姩璁＄畻瀹藉害
 			if ((m_uTextStyle & DT_SINGLELINE) != 0) {
-				// 高度
+				// 楂樺害
 				if (m_cxyFixedLast.cy == 0) {
 					m_cxyFixedLast.cy = m_pManager->GetFontInfo(m_iFont)->tm.tmHeight + 8;
 					m_cxyFixedLast.cy += rcTextPadding.top + rcTextPadding.bottom;
 				}
-				// 宽度
+				// 瀹藉害
 				if (m_cxyFixedLast.cx == 0) {
 					if(m_bAutoCalcWidth) {
 						RECT rcText = { 0, 0, 9999, m_cxyFixedLast.cy };
@@ -149,7 +149,7 @@ namespace DuiLib
 					}
 				}
 			}
-			// 自动计算高度
+			// 鑷姩璁＄畻楂樺害
 			else if(m_cxyFixedLast.cy == 0) {
 				if(m_bAutoCalcHeight) {
 					RECT rcText = { 0, 0, m_cxyFixedLast.cx, 9999 };
@@ -303,6 +303,23 @@ namespace DuiLib
 				CRenderEngine::DrawText(hDC, m_pManager, rc, sText, m_dwDisabledTextColor, \
 				m_iFont, m_uTextStyle);
 		}
+	}
+
+	void CLabelUI::SetAlign(LPCTSTR align_value)
+	{
+		if (_tcsstr(align_value, _T("left")) != NULL) {
+			m_uTextStyle &= ~(DT_CENTER | DT_RIGHT);
+			m_uTextStyle |= DT_LEFT;
+		}
+		if (_tcsstr(align_value, _T("center")) != NULL) {
+			m_uTextStyle &= ~(DT_LEFT | DT_RIGHT);
+			m_uTextStyle |= DT_CENTER;
+		}
+		if (_tcsstr(align_value, _T("right")) != NULL) {
+			m_uTextStyle &= ~(DT_LEFT | DT_CENTER);
+			m_uTextStyle |= DT_RIGHT;
+		}
+		Invalidate();
 	}
 
 	bool CLabelUI::GetAutoCalcWidth() const

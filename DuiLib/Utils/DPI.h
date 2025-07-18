@@ -44,10 +44,17 @@ namespace DuiLib
 		void Scale(POINT *pPoint);
 		SIZE Scale(SIZE szSize);
 		void Scale(SIZE *pSize);
-		int Scale(int iValue);
+		virtual int Scale(int iValue);
 
-		int  ScaleBack(int iValue);
+		virtual int  ScaleBack(int iValue);
 		void ScaleBack(RECT *pRect);
+
+		void SetPaintWindowSize(const SIZE& size);
+		void SetPaintWindowInitSize(const SIZE& size);
+
+	protected:
+		SIZE m_paintWindowSize;
+		SIZE m_paintWindowInitSize;
 
 	private:
 		int m_nScaleFactor;

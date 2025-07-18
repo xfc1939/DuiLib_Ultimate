@@ -162,7 +162,7 @@ namespace DuiLib {
 		unsigned	fTimer				:1;	// A timer is set
 		unsigned    fCaptured           :1;
 		unsigned    fShowCaret          :1;
-		unsigned    fNeedFreshCaret     :1; // ÐÞÕý¸Ä±ä´óÐ¡ºóµã»÷ÆäËûÎ»ÖÃÔ­À´¹â±ê²»ÄÜÏû³ýµÄÎÊÌâ
+		unsigned    fNeedFreshCaret     :1; // ä¿®æ­£æ”¹å˜å¤§å°åŽç‚¹å‡»å…¶ä»–ä½ç½®åŽŸæ¥å…‰æ ‡ä¸èƒ½æ¶ˆé™¤çš„é—®é¢˜
 
 		INT         iCaretWidth;
 		INT         iCaretHeight;
@@ -266,6 +266,7 @@ namespace DuiLib {
 		::ZeroMemory(&cRefs, sizeof(CTxtWinHost) - offsetof(CTxtWinHost, cRefs));
 		cchTextMost = cInitTextMax;
 		laccelpos = -1;
+		chPasswordChar = 0x2022; // 0x2022è¡¨ç¤ºå°åœ†ç‚¹
 	}
 
 	CTxtWinHost::~CTxtWinHost()
@@ -1020,9 +1021,8 @@ err:
 		WCHAR chOldPasswordChar = chPasswordChar;
 
 		chPasswordChar = ch_PasswordChar;
-
 		// notify text services of property change
-		pserv->OnTxPropertyBitsChange(TXTBIT_USEPASSWORD, 
+		auto result = pserv->OnTxPropertyBitsChange(TXTBIT_USEPASSWORD, 
 			(chPasswordChar != 0) ? TXTBIT_USEPASSWORD : 0);
 
 		return chOldPasswordChar;
@@ -1082,9 +1082,9 @@ err:
 	//
 	IMPLEMENT_DUICONTROL(CRichEditUI)
 		CRichEditUI::CRichEditUI() : m_pTwh(NULL), m_bVScrollBarFixing(false), m_bWantTab(true), m_bWantReturn(true), 
-		m_bWantCtrlReturn(true), m_bTransparent(true), m_bRich(true), m_bReadOnly(false), m_bWordWrap(false), m_dwTextColor(0), m_iFont(-1), 
+		m_bWantCtrlReturn(true), m_bTransparent(true), m_bRich(true), m_bReadOnly(false), m_bWordWrap(false), m_dwTextColor(0), m_dwDisabledTextColor(0), m_iFont(-1),
 		m_iLimitText(cInitTextMax), m_lTwhStyle(ES_MULTILINE), m_bDrawCaret(true), m_bInited(false), m_chLeadByte(0),m_uButtonState(0),
-		m_dwTipValueColor(0xFFBAC0C5), m_uTipValueAlign(DT_SINGLELINE | DT_LEFT)
+		m_dwTipValueColor(0xFFBAC0C5), m_uTipValueAlign(DT_SINGLELINE | DT_LEFT),m_iTipFont(-1)
 	{
 #ifndef _UNICODE
 		m_fAccumulateDBC =true;
@@ -1128,7 +1128,7 @@ err:
 				m_pTwh->SetColor(GetTextColor());
 			}
 			else {
-				m_pTwh->SetColor (m_pManager->GetDefaultDisabledColor());
+				m_pTwh->SetColor (GetDisabledTextColor());
 			}
 		}
 	}
@@ -1223,12 +1223,25 @@ err:
 		return m_iFont;
 	}
 
+	int CRichEditUI::GetTipFont()
+	{
+		if (m_iTipFont == -1) {
+			return m_iFont;
+		}
+		return m_iTipFont;
+	}
+
 	void CRichEditUI::SetFont(int index)
 	{
 		m_iFont = index;
 		if( m_pTwh ) {
 			m_pTwh->SetFont(GetManager()->GetFont(m_iFont));
 		}
+	}
+
+	void CRichEditUI::SetTipFont(int index)
+	{
+		m_iTipFont = index;
 	}
 
 	void CRichEditUI::SetFont(LPCTSTR pStrFontName, int nSize, bool bBold, bool bUnderline, bool bItalic)
@@ -1264,12 +1277,22 @@ err:
 		return m_dwTextColor;
 	}
 
+	DWORD CRichEditUI::GetDisabledTextColor()
+	{
+		return m_dwDisabledTextColor;
+	}
+
 	void CRichEditUI::SetTextColor(DWORD dwTextColor)
 	{
 		m_dwTextColor = dwTextColor;
 		if( m_pTwh ) {
 			m_pTwh->SetColor(dwTextColor);
 		}
+	}
+
+	void CRichEditUI::SetDisabledTextColor(DWORD dwDisabledTextColor)
+	{
+		m_dwDisabledTextColor = dwDisabledTextColor;
 	}
 
 	int CRichEditUI::GetLimitText()
@@ -1782,7 +1805,7 @@ err:
 			m_pManager->AddMessageFilter(this);
 			m_pManager->SetTimer(this, DEFAULT_TIMERID, ::GetCaretBlinkTime());
 			if (!m_bEnabled) {
-				m_pTwh->SetColor(m_pManager->GetDefaultDisabledColor());
+				m_pTwh->SetColor(GetDisabledTextColor());
 			}
 		}
 
@@ -1792,11 +1815,15 @@ err:
 	HRESULT CRichEditUI::TxSendMessage(UINT msg, WPARAM wparam, LPARAM lparam, LRESULT *plresult) const
 	{
 		if( m_pTwh ) {
-			if( msg == WM_KEYDOWN && wparam == VK_RETURN ) {
+				if( msg == WM_KEYDOWN && wparam == VK_RETURN ) {
 				if( !m_bWantReturn || (::GetKeyState(VK_CONTROL) < 0 && !m_bWantCtrlReturn) ) {
 					if( m_pManager != NULL ) m_pManager->SendNotify((CControlUI*)this, DUI_MSGTYPE_RETURN);
 					return S_OK;
 				}
+			}
+			if (msg == WM_KEYDOWN && wparam == VK_BACK) {
+				if (m_pManager != NULL) m_pManager->SendNotify((CControlUI*)this, DUI_MSGTYPE_BACK);
+
 			}
 			return m_pTwh->GetTextServices()->TxSendMessage(msg, wparam, lparam, plresult);
 		}
@@ -1830,6 +1857,7 @@ err:
 		case EN_CHANGE:
 			{
 				GetManager()->SendNotify(this, DUI_MSGTYPE_TEXTCHANGED);
+				Invalidate();
 				break;
 			}
 		case EN_DROPFILES:   
@@ -1892,8 +1920,8 @@ err:
         sz.cy = (int)lHeight;
         return sz;
     }
-	// ¶àÐÐ·Çrich¸ñÊ½µÄricheditÓÐÒ»¸ö¹ö¶¯Ìõbug£¬ÔÚ×îºóÒ»ÐÐÊÇ¿ÕÐÐÊ±£¬LineDownºÍSetScrollPosÎÞ·¨¹ö¶¯µ½×îºó
-	// ÒýÈëiPos¾ÍÊÇÎªÁËÐÞÕýÕâ¸öbug
+	// å¤šè¡Œéžrichæ ¼å¼çš„richeditæœ‰ä¸€ä¸ªæ»šåŠ¨æ¡bugï¼Œåœ¨æœ€åŽä¸€è¡Œæ˜¯ç©ºè¡Œæ—¶ï¼ŒLineDownå’ŒSetScrollPosæ— æ³•æ»šåŠ¨åˆ°æœ€åŽ
+	// å¼•å…¥iPoså°±æ˜¯ä¸ºäº†ä¿®æ­£è¿™ä¸ªbug
 	void CRichEditUI::SetScrollPos(SIZE szPos, bool bMsg)
 	{
 		int cx = 0;
@@ -2329,9 +2357,9 @@ err:
 				}
 			}
 		}
-		// »æÖÆÌáÊ¾ÎÄ×Ö
+		// ç»˜åˆ¶æç¤ºæ–‡å­—
 		CDuiString sDrawText = GetText();
-		if(sDrawText.IsEmpty() && !m_bFocused) {
+		if(sDrawText.IsEmpty() /* && !m_bFocused*/) {
 			DWORD dwTextColor = GetTipValueColor();
 			CDuiString sTipValue = GetTipValue();
 			RECT rc = m_rcItem;
@@ -2343,7 +2371,7 @@ err:
 			UINT uTextAlign = GetTipValueAlign();
 			if(IsMultiLine()) uTextAlign |= DT_TOP;
 			else uTextAlign |= DT_VCENTER;
-			CRenderEngine::DrawText(hDC, m_pManager, rc, sTipValue, dwTextColor, m_iFont, uTextAlign);
+			CRenderEngine::DrawText(hDC, m_pManager, rc, sTipValue, dwTextColor, GetTipFont(), uTextAlign);
 		}
 		return true;
 	}
@@ -2474,72 +2502,97 @@ err:
 		}
 	}
 
+	void CRichEditUI::SetPasswordChar(WCHAR c)
+	{
+		if (m_pTwh) {
+			m_pTwh->SetPasswordChar(c);
+		}
+	}
+
+	void CRichEditUI::SetAlign(LPCTSTR align_value)
+	{
+		if (!m_pTwh) {
+			return;
+		}
+		if (_tcsstr(align_value, _T("left")) != NULL) {
+			m_pTwh->SetDefaultAlign(PFA_LEFT);
+		}
+		if (_tcsstr(align_value, _T("center")) != NULL) {
+			m_pTwh->SetDefaultAlign(PFA_CENTER);
+
+		}
+		if (_tcsstr(align_value, _T("right")) != NULL) {
+			m_pTwh->SetDefaultAlign(PFA_RIGHT);
+		}
+	}
+
 	void CRichEditUI::SetAttribute(LPCTSTR pstrName, LPCTSTR pstrValue)
 	{
 		if( _tcscmp(pstrName, _T("vscrollbar")) == 0 ) {
 			if( _tcscmp(pstrValue, _T("true")) == 0 ) m_lTwhStyle |= ES_DISABLENOSCROLL | WS_VSCROLL;
-			if(m_pTwh) m_pTwh->TxEnableScrollBar(SB_VERT, ESB_ENABLE_BOTH);
 		}
 		if( _tcscmp(pstrName, _T("autovscroll")) == 0 ) {
 			if( _tcscmp(pstrValue, _T("true")) == 0 ) m_lTwhStyle |= ES_AUTOVSCROLL;
-			if(m_pTwh) m_pTwh->TxShowScrollBar(SB_VERT, true);
 		}
 		else if( _tcscmp(pstrName, _T("hscrollbar")) == 0 ) {
 			if( _tcscmp(pstrValue, _T("true")) == 0 ) m_lTwhStyle |= ES_DISABLENOSCROLL | WS_HSCROLL;
-			if(m_pTwh) m_pTwh->TxEnableScrollBar(SB_HORZ, ESB_ENABLE_BOTH);
 		}
-		if( _tcscmp(pstrName, _T("autohscroll")) == 0 ) {
-			if( _tcscmp(pstrValue, _T("true")) == 0 ) m_lTwhStyle |= ES_AUTOHSCROLL;
-			if(m_pTwh) m_pTwh->TxShowScrollBar(SB_HORZ, true);
+		if (_tcscmp(pstrName, _T("autohscroll")) == 0) {
+			if (_tcscmp(pstrValue, _T("true")) == 0) m_lTwhStyle |= ES_AUTOHSCROLL;
 		}
-		else if( _tcsicmp(pstrName, _T("multiline")) == 0 ) {
+		else if (_tcsicmp(pstrName, _T("multiline")) == 0) {
 			SetMultiLine(_tcscmp(pstrValue, _T("true")) == 0);
 		}
-		else if( _tcscmp(pstrName, _T("wanttab")) == 0 ) {
+		else if (_tcscmp(pstrName, _T("wanttab")) == 0) {
 			SetWantTab(_tcscmp(pstrValue, _T("true")) == 0);
 		}
-		else if( _tcscmp(pstrName, _T("wantreturn")) == 0 ) {
+		else if (_tcscmp(pstrName, _T("wantreturn")) == 0) {
 			SetWantReturn(_tcscmp(pstrValue, _T("true")) == 0);
 		}
-		else if( _tcscmp(pstrName, _T("wantctrlreturn")) == 0 ) {
+		else if (_tcscmp(pstrName, _T("wantctrlreturn")) == 0) {
 			SetWantCtrlReturn(_tcscmp(pstrValue, _T("true")) == 0);
 		}
-		else if( _tcscmp(pstrName, _T("transparent")) == 0 ) {
+		else if (_tcscmp(pstrName, _T("transparent")) == 0) {
 			SetTransparent(_tcscmp(pstrValue, _T("true")) == 0);
 		}
-		else if( _tcscmp(pstrName, _T("rich")) == 0 ) {
+		else if (_tcscmp(pstrName, _T("rich")) == 0) {
 			SetRich(_tcscmp(pstrValue, _T("true")) == 0);
 		}
-		else if( _tcscmp(pstrName, _T("readonly")) == 0 ) {
-			if( _tcscmp(pstrValue, _T("true")) == 0 ) { 
-				m_lTwhStyle |= ES_READONLY; 
-				m_bReadOnly = true; 
-			}
+		else if (_tcscmp(pstrName, _T("readonly")) == 0) {
+			if (_tcscmp(pstrValue, _T("true")) == 0) { m_lTwhStyle |= ES_READONLY; m_bReadOnly = true; }
 		}
-		else if( _tcscmp(pstrName, _T("password")) == 0 ) {
-			if( _tcscmp(pstrValue, _T("true")) == 0 ) m_lTwhStyle |= ES_PASSWORD;
+		else if (_tcscmp(pstrName, _T("password")) == 0) {
+			if (_tcscmp(pstrValue, _T("true")) == 0) m_lTwhStyle |= ES_PASSWORD;
 		}
-		else if( _tcscmp(pstrName, _T("align")) == 0 ) {
-			if( _tcsstr(pstrValue, _T("left")) != NULL ) {
+		else if (_tcscmp(pstrName, _T("align")) == 0) {
+			if (_tcsstr(pstrValue, _T("left")) != NULL) {
 				m_lTwhStyle &= ~(ES_CENTER | ES_RIGHT);
 				m_lTwhStyle |= ES_LEFT;
 			}
-			if( _tcsstr(pstrValue, _T("center")) != NULL ) {
+			if (_tcsstr(pstrValue, _T("center")) != NULL) {
 				m_lTwhStyle &= ~(ES_LEFT | ES_RIGHT);
 				m_lTwhStyle |= ES_CENTER;
 			}
-			if( _tcsstr(pstrValue, _T("right")) != NULL ) {
+			if (_tcsstr(pstrValue, _T("right")) != NULL) {
 				m_lTwhStyle &= ~(ES_LEFT | ES_CENTER);
 				m_lTwhStyle |= ES_RIGHT;
 			}
 		}
-		else if( _tcscmp(pstrName, _T("font")) == 0 ) SetFont(_ttoi(pstrValue));
+		else if (_tcscmp(pstrName, _T("font")) == 0) SetFont(_ttoi(pstrValue));
+		else if (_tcscmp(pstrName, _T("tipfont")) == 0) SetTipFont(_ttoi(pstrValue));
 		else if( _tcscmp(pstrName, _T("textcolor")) == 0 ) {
 			while( *pstrValue > _T('\0') && *pstrValue <= _T(' ') ) pstrValue = ::CharNext(pstrValue);
 			if( *pstrValue == _T('#')) pstrValue = ::CharNext(pstrValue);
 			LPTSTR pstr = NULL;
 			DWORD clrColor = _tcstoul(pstrValue, &pstr, 16);
 			SetTextColor(clrColor);
+		}
+		else if (_tcscmp(pstrName, _T("disabledtextcolor")) == 0) {
+			while (*pstrValue > _T('\0') && *pstrValue <= _T(' ')) pstrValue = ::CharNext(pstrValue);
+			if (*pstrValue == _T('#')) pstrValue = ::CharNext(pstrValue);
+			LPTSTR pstr = NULL;
+			DWORD clrColor = _tcstoul(pstrValue, &pstr, 16);
+			SetDisabledTextColor(clrColor);
 		}
 		else if( _tcsicmp(pstrName, _T("maxchar")) == 0 ) SetLimitText(_ttoi(pstrValue));
 		else if( _tcsicmp(pstrName, _T("normalimage")) == 0 ) SetNormalImage(pstrValue);
@@ -2578,7 +2631,7 @@ err:
 		if( uMsg == WM_MOUSEWHEEL && (LOWORD(wParam) & MK_CONTROL) == 0 ) return 0;
 
 		if (uMsg == WM_IME_COMPOSITION) {
-			// ½â¾öÎ¢ÈíÊäÈë·¨Î»ÖÃÒì³£µÄÎÊÌâ
+			// è§£å†³å¾®è½¯è¾“å…¥æ³•ä½ç½®å¼‚å¸¸çš„é—®é¢˜
 			HIMC hIMC = ImmGetContext(GetManager()->GetPaintWindow());
 			if (hIMC)  {
 				POINT point;
@@ -2647,6 +2700,7 @@ err:
 		else if( (uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST) || uMsg == WM_CHAR || uMsg == WM_IME_CHAR ) {
 #endif
 			if( !IsFocused() ) return 0;
+			
 		}
 #ifdef _USEIMM
 		else if( uMsg == WM_IME_STARTCOMPOSITION ) {
@@ -2672,7 +2726,7 @@ err:
 		}
 #endif
 		else if( uMsg == WM_CONTEXTMENU ) {
-			// RichEditÊÇ·ñÖ§³ÖÓÒ¼ü²Ëµ¥£¬Ê¹ÓÃmenuÊôÐÔÀ´¿ØÖÆ
+			// RichEditæ˜¯å¦æ”¯æŒå³é”®èœå•ï¼Œä½¿ç”¨menuå±žæ€§æ¥æŽ§åˆ¶
 			if(!IsContextMenuUsed()) {
 				bWasHandled = false;
 				return 0;
@@ -2684,19 +2738,19 @@ err:
 				bWasHandled = false;
 				return 0;
 			}
-			//´´½¨Ò»¸öµ¯³öÊ½²Ëµ¥
+			//åˆ›å»ºä¸€ä¸ªå¼¹å‡ºå¼èœå•
 			HMENU hPopMenu = CreatePopupMenu();
-			AppendMenu(hPopMenu, 0, ID_RICH_UNDO, _T("³·Ïú(&U)"));
-			AppendMenu(hPopMenu, 0, ID_RICH_REDO, _T("ÖØ×ö(&R)"));
+			AppendMenu(hPopMenu, 0, ID_RICH_UNDO, _T("æ’¤é”€(&U)"));
+			AppendMenu(hPopMenu, 0, ID_RICH_REDO, _T("é‡åš(&R)"));
 			AppendMenu(hPopMenu, MF_SEPARATOR, 0, _T(""));
-			AppendMenu(hPopMenu, 0, ID_RICH_CUT, _T("¼ôÇÐ(&X)"));
-			AppendMenu(hPopMenu, 0, ID_RICH_COPY, _T("¸´ÖÆ(&C)"));
-			AppendMenu(hPopMenu, 0, ID_RICH_PASTE, _T("Õ³Ìû(&V)"));
-			AppendMenu(hPopMenu, 0, ID_RICH_CLEAR, _T("Çå¿Õ(&L)"));
+			AppendMenu(hPopMenu, 0, ID_RICH_CUT, _T("å‰ªåˆ‡(&X)"));
+			AppendMenu(hPopMenu, 0, ID_RICH_COPY, _T("å¤åˆ¶(&C)"));
+			AppendMenu(hPopMenu, 0, ID_RICH_PASTE, _T("ç²˜å¸–(&V)"));
+			AppendMenu(hPopMenu, 0, ID_RICH_CLEAR, _T("æ¸…ç©º(&L)"));
 			AppendMenu(hPopMenu, MF_SEPARATOR, 0, _T(""));
-			AppendMenu(hPopMenu, 0, ID_RICH_SELECTALL, _T("È«Ñ¡(&A)"));
+			AppendMenu(hPopMenu, 0, ID_RICH_SELECTALL, _T("å…¨é€‰(&A)"));
 
-			//³õÊ¼»¯²Ëµ¥Ïî
+			//åˆå§‹åŒ–èœå•é¡¹
 			UINT uUndo = (CanUndo() ? 0 : MF_GRAYED);
 			EnableMenuItem(hPopMenu, ID_RICH_UNDO, MF_BYCOMMAND | uUndo);
 			UINT uRedo = (CanRedo() ? 0 : MF_GRAYED);
@@ -2818,4 +2872,7 @@ err:
 		return lResult;
 	}
 
+	
+
 } // namespace DuiLib
+
