@@ -491,7 +491,7 @@ namespace DuiLib {
 
 		while (!pData)
 		{
-			//������ͼƬ, ��ֱ��ȥ��ȡbitmap.m_lpstrָ���·��
+			// 尝试读取图片，若失败则直接去读取bitmap.m_lpstr指定的路径
 			HANDLE hFile = ::CreateFile(bitmap.m_lpstr, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, \
 				FILE_ATTRIBUTE_NORMAL, NULL);
 			if( hFile == INVALID_HANDLE_VALUE ) break;
