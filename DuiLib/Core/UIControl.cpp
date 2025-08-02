@@ -4,68 +4,71 @@
 namespace DuiLib {
 	IMPLEMENT_DUICONTROL(CControlUI)
 
-		CControlUI::CControlUI()
-		:m_pManager(NULL), 
-		m_pParent(NULL), 
-		m_bUpdateNeeded(true),
-		m_bMenuUsed(false),
-		m_bVisible(true), 
-		m_bInternVisible(true),
-		m_bFocused(false),
-		m_bEnabled(true),
-		m_bMouseEnabled(true),
-		m_bKeyboardEnabled(true),
-		m_bFloat(false),
-		m_uFloatAlign(0),
-		m_bSetPos(false),
-		m_bRichEvent(false),
-		m_bDragEnabled(false),
-		m_bDropEnabled(false),
-		m_bResourceText(false),
-		m_chShortcut('\0'),
-		m_pTag(NULL),
-		m_dwBackColor(0),
-		m_dwBackColor2(0),
-		m_dwBackColor3(0),
-		m_dwForeColor(0),
-		m_dwBorderColor(0),
-		m_dwFocusBorderColor(0),
-		m_bColorHSL(false),
-		m_nBorderSize(0),
-		m_nBorderStyle(PS_SOLID),
-		m_nTooltipWidth(300),
-		m_nBkRadius(0),
-		m_wCursor(0),
-		m_instance(NULL),
-		m_bBorderWithFill(false)
-	{
-		m_cXY.cx = m_cXY.cy = 0;
-		m_cxyFixed.cx = m_cxyFixed.cy = 0;
-		m_cxyMin.cx = m_cxyMin.cy = 0;
-		m_cxyMax.cx = m_cxyMax.cy = 9999;
-		m_cxyBorderRound.cx = m_cxyBorderRound.cy = 0;
+        CControlUI::CControlUI()
+            : m_pManager(NULL)
+            , m_pParent(NULL)
+            , m_bUpdateNeeded(true)
+            , m_bMenuUsed(false)
+            , m_bVisible(true)
+            , m_bInternVisible(true)
+            , m_bFocused(false)
+            , m_bEnabled(true)
+            , m_bMouseEnabled(true)
+            , m_bKeyboardEnabled(true)
+            , m_bFloat(false)
+            , m_uFloatAlign(0)
+            , m_bSetPos(false)
+            , m_bRichEvent(false)
+            , m_bDragEnabled(false)
+            , m_bDropEnabled(false)
+            , m_bResourceText(false)
+            , m_chShortcut('\0')
+            , m_pTag(NULL)
+            , m_dwBackColor(0)
+            , m_dwBackColor2(0)
+            , m_dwBackColor3(0)
+            , m_dwForeColor(0)
+            , m_dwBorderColor(0)
+            , m_dwFocusBorderColor(0)
+            , m_bColorHSL(false)
+            , m_nBorderSize(0)
+            , m_nBorderStyle(PS_SOLID)
+            , m_nTooltipWidth(300)
+            , m_nBkRadius(0)
+            , m_wCursor(0)
+            , m_nCutType(0)
+            , m_instance(NULL)
+            , m_bBorderWithFill(false)
+        {
+            m_cXY.cx = m_cXY.cy = 0;
+            m_cxyFixed.cx = m_cxyFixed.cy = 0;
+            m_cxyMin.cx = m_cxyMin.cy = 0;
+            m_cxyMax.cx = m_cxyMax.cy = 9999;
+            m_cxyBorderRound.cx = m_cxyBorderRound.cy = 0;
 
-		::ZeroMemory(&m_rcPadding, sizeof(RECT));
-		::ZeroMemory(&m_rcItem, sizeof(RECT));
-		::ZeroMemory(&m_rcPaint, sizeof(RECT));
-		::ZeroMemory(&m_rcBorderSize,sizeof(RECT));
-		m_piFloatPercent.left = m_piFloatPercent.top = m_piFloatPercent.right = m_piFloatPercent.bottom = 0.0f;
-	}
+            ::ZeroMemory(&m_rcPadding, sizeof(RECT));
+            ::ZeroMemory(&m_rcItem, sizeof(RECT));
+            ::ZeroMemory(&m_rcPaint, sizeof(RECT));
+            ::ZeroMemory(&m_rcBorderSize, sizeof(RECT));
+            m_piFloatPercent.left = m_piFloatPercent.top = m_piFloatPercent.right = m_piFloatPercent.bottom = 0.0f;
+        }
 
-	CControlUI::~CControlUI()
-	{
-		if( OnDestroy ) OnDestroy(this);
-		RemoveAllCustomAttribute();	
-		if( m_pManager != NULL ) m_pManager->ReapObjects(this);
-	}
+        CControlUI::~CControlUI()
+        {
+            if (OnDestroy)
+                OnDestroy(this);
+            RemoveAllCustomAttribute();
+            if (m_pManager != NULL)
+                m_pManager->ReapObjects(this);
+        }
 
-	CDuiString CControlUI::GetName() const
-	{
-		return m_sName;
-	}
+        CDuiString CControlUI::GetName() const
+        {
+            return m_sName;
+        }
 
-	void CControlUI::SetName(LPCTSTR pstrName)
-	{
+        void CControlUI::SetName(LPCTSTR pstrName)
+        {
 		m_sName = pstrName;
 	}
 
@@ -367,19 +370,30 @@ namespace DuiLib {
 		return nBkRadius;
 	}
 
-	void CControlUI::SetBkRadius(int radius)
-	{
-		m_nBkRadius = radius;
-		Invalidate();
-	}
+        int CControlUI::GetCutType() const
+        {
+            return m_nCutType;
+        }
 
-	bool CControlUI::DrawImage(HDC hDC, LPCTSTR pStrImage, LPCTSTR pStrModify)
-	{
-		return CRenderEngine::DrawImageString(hDC, m_pManager, m_rcItem, m_rcPaint, pStrImage, pStrModify, m_instance, GetBkRadius());
-	}
+        void CControlUI::SetCutType(int cutType)
+        {
+            m_nCutType = cutType;
+            Invalidate();
+        }
 
-	const RECT& CControlUI::GetPos() const
-	{
+        void CControlUI::SetBkRadius(int radius)
+        {
+            m_nBkRadius = radius;
+            Invalidate();
+        }
+
+        bool CControlUI::DrawImage(HDC hDC, LPCTSTR pStrImage, LPCTSTR pStrModify)
+        {
+            return CRenderEngine::DrawImageString(hDC, m_pManager, m_rcItem, m_rcPaint, pStrImage, pStrModify, m_instance, GetBkRadius(), GetCutType());
+        }
+
+        const RECT& CControlUI::GetPos() const
+        {
 		return m_rcItem;
 	}
 
@@ -1128,9 +1142,11 @@ namespace DuiLib {
 			SetBorderRound(cxyRound);
 		} else if (_tcsicmp(pstrName, _T("bkradius")) == 0) {		
 			SetBkRadius(_ttoi(pstrValue));
-		}
-		else if( _tcsicmp(pstrName, _T("bkimage")) == 0 ) SetBkImage(pstrValue);
-		else if( _tcsicmp(pstrName, _T("foreimage")) == 0 ) SetForeImage(pstrValue);
+                } else if (_tcsicmp(pstrName, _T("cuttype")) == 0) {
+                    SetCutType(_ttoi(pstrValue));
+                } else if (_tcsicmp(pstrName, _T("bkimage")) == 0)
+                    SetBkImage(pstrValue);
+                else if( _tcsicmp(pstrName, _T("foreimage")) == 0 ) SetForeImage(pstrValue);
 		else if( _tcsicmp(pstrName, _T("width")) == 0 ) SetFixedWidth(_ttoi(pstrValue));
 		else if( _tcsicmp(pstrName, _T("height")) == 0 ) SetFixedHeight(_ttoi(pstrValue));
 		else if( _tcsicmp(pstrName, _T("minwidth")) == 0 ) SetMinWidth(_ttoi(pstrValue));

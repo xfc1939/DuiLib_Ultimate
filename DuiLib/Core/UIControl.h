@@ -77,13 +77,14 @@ namespace DuiLib {
 		int GetBkRadius() const;
 		void SetBkRadius(int nRadius);
 		bool DrawImage(HDC hDC, LPCTSTR pStrImage, LPCTSTR pStrModify = NULL);
-
-		//边框相关
-		int GetBorderSize() const;
-		void SetBorderSize(int nSize);
-		DWORD GetBorderColor() const;
-		void SetBorderColor(DWORD dwBorderColor);
-		RECT GetBorderRectSize() const;
+                int GetCutType() const;
+                void SetCutType(int nCutType);
+                // 边框相关
+                int GetBorderSize() const;
+                void SetBorderSize(int nSize);
+                DWORD GetBorderColor() const;
+                void SetBorderColor(DWORD dwBorderColor);
+                RECT GetBorderRectSize() const;
 		void SetBorderSize(RECT rc);
 		int GetLeftBorderSize() const;
 		void SetLeftBorderSize(int nSize);
@@ -268,9 +269,9 @@ namespace DuiLib {
 		RECT m_rcPaint;
 		RECT m_rcBorderSize;
 	    HINSTANCE m_instance;
-
-		CStdStringPtrMap m_mCustomAttrHash;
-	};
+            int m_nCutType;
+            CStdStringPtrMap m_mCustomAttrHash;
+        };
 
 } // namespace DuiLib
 

@@ -15,10 +15,10 @@
 #	include "../../3rd/CxImage/ximawnd.cpp"
 #	include "../../3rd/CxImage/xmemfile.cpp"
 #endif
-#include <string>
-#include <memory>
 #include <algorithm>
-
+#include <memory>
+#include <string>
+#include <vector>
 
 ///////////////////////////////////////////////////////////////////////////////////////
 namespace DuiLib {
@@ -337,64 +337,116 @@ namespace DuiLib {
 		return rc;
 	}
 
-	void CreateRoundedRectPath(Gdiplus::GraphicsPath& path, int x, int y, int width, int height, int radius) {
-		int d = radius * 2;
+        // 优先宽铺满，铺满后如果高度超出则裁剪下半部分
+        // 如果高度不够，则高度铺满，宽裁剪中间
+        RECT CalcCoverRect(
+            const Gdiplus::Size& imageSize,
+            const Gdiplus::Size& boxSize)
+        {
+            float imageW = static_cast<float>(imageSize.Width);
+            float imageH = static_cast<float>(imageSize.Height);
+            float boxW = static_cast<float>(boxSize.Width);
+            float boxH = static_cast<float>(boxSize.Height);
 
-		// 左上角圆弧
-		path.AddArc(x, y, d, d, 180, 90);
-		// 顶边
-		path.AddLine(x + radius, y, x + width - radius, y);
-		// 右上角圆弧
-		path.AddArc(x + width - d, y, d, d, 270, 90);
-		// 右边
-		path.AddLine(x + width, y + radius, x + width, y + height - radius);
-		// 右下角圆弧
-		path.AddArc(x + width - d, y + height - d, d, d, 0, 90);
-		// 底边
-		path.AddLine(x + width - radius, y + height, x + radius, y + height);
-		// 左下角圆弧
-		path.AddArc(x, y + height - d, d, d, 90, 90);
-		// 左边
-		path.AddLine(x, y + height - radius, x, y + radius);
+            RECT result = { 0, 0, 0, 0 };
 
-		path.CloseFigure(); // 闭合路径
-	}
+            // 除0保护
+            if (imageW <= 0.0f || imageH <= 0.0f || boxW <= 0.0f || boxH <= 0.0f) {
+                return result;
+            }
 
-	bool DrawImage(HDC hDC, CPaintManagerUI* pManager, const RECT& rc, const RECT& rcPaint, const CDuiString& sImageName, const CDuiString& sImageResType, RECT rcItem, RECT rcBmpPart, RECT rcCorner, DWORD dwMask, UINT uFade, UINT uRotate, bool bGdiplus, bool bHole, bool bTiledX, bool bTiledY, HINSTANCE instance = NULL, int bkradius=0)
-	{
-		if (sImageName.IsEmpty()) {
-			return false;
-		}
-		const TImageInfo* data = NULL;
-		data = pManager->GetImageEx((LPCTSTR)sImageName, sImageResType.IsEmpty() ? NULL : (LPCTSTR)sImageResType, dwMask, false, bGdiplus, instance);
-		if( !data ) return false;
+            float scale = boxW / imageW;
+            float scaledH = imageH * scale;
 
-		if( rcBmpPart.left == 0 && rcBmpPart.right == 0 && rcBmpPart.top == 0 && rcBmpPart.bottom == 0 ) {
-			rcBmpPart.right = data->nX;
-			rcBmpPart.bottom = data->nY;
+            if (scaledH >= boxH) {
+                // 宽度铺满，高度裁剪下半部分
+                float cropH = boxH / scale;
+                result.left = 0;
+                result.top = 0;
+                result.right = static_cast<LONG>(imageW);
+                result.bottom = static_cast<LONG>(cropH);
+            } else {
+                // 高度铺满，宽度裁剪中间部分
+                scale = boxH / imageH;
+                float cropW = boxW / scale;
+                float offsetX = (imageW - cropW) / 2.0f;
 
-			rcBmpPart = ComputeCoverSourceRect(Gdiplus::Size(data->nX, data->nY), Gdiplus::Size(rcItem.right - rcItem.left, rcItem.bottom - rcItem.top));
-		}
-		if (rcBmpPart.right > data->nX) rcBmpPart.right = data->nX;
-		if (rcBmpPart.bottom > data->nY) rcBmpPart.bottom = data->nY;
+                result.left = static_cast<LONG>(offsetX);
+                result.top = 0;
+                result.right = static_cast<LONG>(offsetX + cropW);
+                result.bottom = static_cast<LONG>(imageH);
+            }
 
-		RECT rcTemp;
-		if( !::IntersectRect(&rcTemp, &rcItem, &rc) ) return true;
-		if( !::IntersectRect(&rcTemp, &rcItem, &rcPaint) ) return true;
+            return result;
+        }
 
-		if(bGdiplus) {
-			CRenderEngine::GdiplusDrawImage(hDC, data->pImage, rcItem, rcPaint, rcBmpPart, pManager->IsLayered() ? true : data->bAlpha, uFade, uRotate, bkradius);
-		}
-		else {
-			CRenderEngine::DrawImage(hDC, data->hBitmap, rcItem, rcPaint, rcBmpPart, rcCorner, pManager->IsLayered() ? true : data->bAlpha, uFade, bHole, bTiledX, bTiledY);
-		}
+        void CreateRoundedRectPath(Gdiplus::GraphicsPath& path, int x, int y, int width, int height, int radius)
+        {
+            int d = radius * 2;
 
-		return true;
-	}
+            // 左上角圆弧
+            path.AddArc(x, y, d, d, 180, 90);
+            // 顶边
+            path.AddLine(x + radius, y, x + width - radius, y);
+            // 右上角圆弧
+            path.AddArc(x + width - d, y, d, d, 270, 90);
+            // 右边
+            path.AddLine(x + width, y + radius, x + width, y + height - radius);
+            // 右下角圆弧
+            path.AddArc(x + width - d, y + height - d, d, d, 0, 90);
+            // 底边
+            path.AddLine(x + width - radius, y + height, x + radius, y + height);
+            // 左下角圆弧
+            path.AddArc(x, y + height - d, d, d, 90, 90);
+            // 左边
+            path.AddLine(x, y + height - radius, x, y + radius);
 
-	/////////////////////////////////////////////////////////////////////////////////////
-	//
-	//
+            path.CloseFigure(); // 闭合路径
+        }
+
+        bool DrawImage(HDC hDC, CPaintManagerUI* pManager, const RECT& rc, const RECT& rcPaint, const CDuiString& sImageName, const CDuiString& sImageResType, RECT rcItem, RECT rcBmpPart, RECT rcCorner, DWORD dwMask, UINT uFade, UINT uRotate, bool bGdiplus, bool bHole, bool bTiledX, bool bTiledY, HINSTANCE instance = NULL, int bkradius = 0, int cut = 0)
+        {
+            if (sImageName.IsEmpty()) {
+                return false;
+            }
+            const TImageInfo* data = NULL;
+            data = pManager->GetImageEx((LPCTSTR)sImageName, sImageResType.IsEmpty() ? NULL : (LPCTSTR)sImageResType, dwMask, false, bGdiplus, instance);
+            if (!data)
+                return false;
+
+            if (rcBmpPart.left == 0 && rcBmpPart.right == 0 && rcBmpPart.top == 0 && rcBmpPart.bottom == 0) {
+                rcBmpPart.right = data->nX;
+                rcBmpPart.bottom = data->nY;
+
+                if (cut == 1) {
+                    rcBmpPart = ComputeCoverSourceRect(Gdiplus::Size(data->nX, data->nY), Gdiplus::Size(rcItem.right - rcItem.left, rcItem.bottom - rcItem.top));
+                } else if (cut == 2) {
+                    rcBmpPart = CalcCoverRect(Gdiplus::Size(data->nX, data->nY), Gdiplus::Size(rcItem.right - rcItem.left, rcItem.bottom - rcItem.top));
+                }
+            }
+            if (rcBmpPart.right > data->nX)
+                rcBmpPart.right = data->nX;
+            if (rcBmpPart.bottom > data->nY)
+                rcBmpPart.bottom = data->nY;
+
+            RECT rcTemp;
+            if (!::IntersectRect(&rcTemp, &rcItem, &rc))
+                return true;
+            if (!::IntersectRect(&rcTemp, &rcItem, &rcPaint))
+                return true;
+
+            if (bGdiplus) {
+                CRenderEngine::GdiplusDrawImage(hDC, data->pImage, rcItem, rcPaint, rcBmpPart, rcCorner, pManager->IsLayered() ? true : data->bAlpha, uFade, uRotate, bkradius);
+            } else {
+                CRenderEngine::DrawImage(hDC, data->hBitmap, rcItem, rcPaint, rcBmpPart, rcCorner, pManager->IsLayered() ? true : data->bAlpha, uFade, bHole, bTiledX, bTiledY);
+            }
+
+            return true;
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //
 
 #ifdef USE_XIMAGE_EFFECT
 	static DWORD LoadImage2Memory(const STRINGorID &bitmap, LPCTSTR type,LPBYTE &pData)
@@ -1205,48 +1257,48 @@ namespace DuiLib {
 		::DeleteDC(hCloneDC);
 	}
 
-	
+        bool CRenderEngine::DrawImageInfo(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, const TDrawInfo* pDrawInfo, HINSTANCE instance, int bkradius, int cut_type)
+        {
+            if (pManager == NULL || hDC == NULL || pDrawInfo == NULL)
+                return false;
+            RECT rcDest = rcItem;
+            // �������Ŀ������
+            if (pDrawInfo->rcDest.left != 0 || pDrawInfo->rcDest.top != 0 || pDrawInfo->rcDest.right != 0 || pDrawInfo->rcDest.bottom != 0) {
+                rcDest.left = rcItem.left + pDrawInfo->rcDest.left;
+                rcDest.top = rcItem.top + pDrawInfo->rcDest.top;
+                rcDest.right = rcItem.left + pDrawInfo->rcDest.right;
+                if (rcDest.right > rcItem.right)
+                    rcDest.right = rcItem.right;
+                rcDest.bottom = rcItem.top + pDrawInfo->rcDest.bottom;
+                if (rcDest.bottom > rcItem.bottom)
+                    rcDest.bottom = rcItem.bottom;
+            }
+            // ���ݶ��뷽ʽ����Ŀ������
+            if (pDrawInfo->szImage.cx > 0 && pDrawInfo->szImage.cy > 0) {
+                SIZE szImage = pManager->GetDPIObj()->Scale(pDrawInfo->szImage);
+                RECT rcPadding = pManager->GetDPIObj()->Scale(pDrawInfo->rcPadding);
+                DuiLib::MakeImageDest(rcItem, szImage, pDrawInfo->sAlign, rcPadding, rcDest);
+            }
 
-	bool CRenderEngine::DrawImageInfo(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, const TDrawInfo* pDrawInfo, HINSTANCE instance, int bkradius)
-	{
-		if( pManager == NULL || hDC == NULL || pDrawInfo == NULL ) return false;
-		RECT rcDest = rcItem;
-		// �������Ŀ������
-		if( pDrawInfo->rcDest.left != 0 || pDrawInfo->rcDest.top != 0 ||
-			pDrawInfo->rcDest.right != 0 || pDrawInfo->rcDest.bottom != 0 ) {
-				rcDest.left = rcItem.left + pDrawInfo->rcDest.left;
-				rcDest.top = rcItem.top + pDrawInfo->rcDest.top;
-				rcDest.right = rcItem.left + pDrawInfo->rcDest.right;
-				if( rcDest.right > rcItem.right ) rcDest.right = rcItem.right;
-				rcDest.bottom = rcItem.top + pDrawInfo->rcDest.bottom;
-				if( rcDest.bottom > rcItem.bottom ) rcDest.bottom = rcItem.bottom;
-		}
-		// ���ݶ��뷽ʽ����Ŀ������
-		if(pDrawInfo->szImage.cx > 0 && pDrawInfo->szImage.cy > 0) {
-			SIZE szImage = pManager->GetDPIObj()->Scale(pDrawInfo->szImage);
-			RECT rcPadding = pManager->GetDPIObj()->Scale(pDrawInfo->rcPadding);
-			DuiLib::MakeImageDest(rcItem, szImage, pDrawInfo->sAlign, rcPadding, rcDest);
-		}
+            bool bRet = DuiLib::DrawImage(hDC, pManager, rcItem, rcPaint, pDrawInfo->sImageName, pDrawInfo->sResType, rcDest,
+                pDrawInfo->rcSource, pDrawInfo->rcCorner, pDrawInfo->dwMask, pDrawInfo->uFade, pDrawInfo->uRotate, pDrawInfo->bGdiplus, pDrawInfo->bHole, pDrawInfo->bTiledX, pDrawInfo->bTiledY, instance, bkradius, cut_type);
 
-		bool bRet = DuiLib::DrawImage(hDC, pManager, rcItem, rcPaint, pDrawInfo->sImageName, pDrawInfo->sResType, rcDest, \
-			pDrawInfo->rcSource, pDrawInfo->rcCorner, pDrawInfo->dwMask, pDrawInfo->uFade, pDrawInfo->uRotate, pDrawInfo->bGdiplus, pDrawInfo->bHole, pDrawInfo->bTiledX, pDrawInfo->bTiledY, instance, bkradius);
+            return bRet;
+        }
 
-		return bRet;
-	}
+        bool CRenderEngine::DrawImageString(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, LPCTSTR pStrImage, LPCTSTR pStrModify, HINSTANCE instance, int bkradius, int cut_type)
+        {
+            if ((pManager == NULL) || (hDC == NULL))
+                return false;
+            const TDrawInfo* pDrawInfo = pManager->GetDrawInfo(pStrImage, pStrModify);
+            return DrawImageInfo(hDC, pManager, rcItem, rcPaint, pDrawInfo, instance, bkradius, cut_type);
+        }
 
-
-	bool CRenderEngine::DrawImageString(HDC hDC, CPaintManagerUI* pManager, const RECT& rcItem, const RECT& rcPaint, LPCTSTR pStrImage, LPCTSTR pStrModify, HINSTANCE instance, int bkradius)
-	{
-		if ((pManager == NULL) || (hDC == NULL)) return false;
-		const TDrawInfo* pDrawInfo = pManager->GetDrawInfo(pStrImage, pStrModify);
-		return DrawImageInfo(hDC, pManager, rcItem, rcPaint, pDrawInfo, instance, bkradius);
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////
-	//
-	//
-	TImageInfo* CRenderEngine::GdiplusLoadImage(STRINGorID bitmap, LPCTSTR type, DWORD mask, HINSTANCE instance)
-	{
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //
+        TImageInfo* CRenderEngine::GdiplusLoadImage(STRINGorID bitmap, LPCTSTR type, DWORD mask, HINSTANCE instance)
+        {
 		LPBYTE pData = NULL;
 		DWORD dwSize = 0;
 		do 
@@ -1443,55 +1495,142 @@ namespace DuiLib {
 		return data;
 	}
 
-	void CRenderEngine::GdiplusDrawImage(HDC hDC, Gdiplus::Image* image, const RECT& rc, const RECT& rcPaint, const RECT& rcBmpPart, bool bAlpha, UINT uFade, UINT uRotate, int bkradius)
-	{
-		Gdiplus::Graphics g(hDC);
+        void CRenderEngine::GdiplusDrawImage(HDC hDC, Gdiplus::Image* image, const RECT& rc, const RECT& rcPaint, const RECT& rcBmpPart, const RECT& rcCorner, bool bAlpha, UINT uFade, UINT uRotate, int bkradius)
+        {
+            if (!image) {
+                return;
+            }
+            
+                Gdiplus::Graphics g(hDC);
 
-		//���û�ͼʱ���˲�ģʽΪ�����������
-		g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-		g.SetInterpolationMode(Gdiplus::InterpolationMode::InterpolationModeHighQualityBicubic);
-		g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);         // 像素对齐精度
-		g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);   // 混合效果质量
-		g.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
+                // ���û�ͼʱ���˲�ģʽΪ�����������
+                g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+                g.SetInterpolationMode(Gdiplus::InterpolationMode::InterpolationModeHighQualityBicubic);
+                g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality); // 像素对齐精度
+                g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality); // 混合效果质量
+                g.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
 
-		Gdiplus::ImageAttributes imageAtt;
-		if(uFade != 255) {
-			Gdiplus::ColorMatrix colorMatrix =
-			{
-				1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, uFade / 255.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			};
-			imageAtt.SetColorMatrix (&colorMatrix, Gdiplus::ColorMatrixFlagsDefault, Gdiplus::ColorAdjustTypeBitmap);
-		}
-		
-		Gdiplus::RectF rcDest(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
-		Gdiplus::RectF rcSrc(rcBmpPart.left, rcBmpPart.top, rcBmpPart.right - rcBmpPart.left, rcBmpPart.bottom - rcBmpPart.top);
-		if(uRotate > 0) {
-			POINT ptCenter = {rc.left + (rc.right - rc.left) / 2, rc.top + (rc.bottom - rc.top) / 2};
-			int cx = rc.right - rc.left;
-			int cy = rc.bottom - rc.top;
+                Gdiplus::ImageAttributes imageAtt;
+                if (uFade != 255) {
+                    Gdiplus::ColorMatrix colorMatrix = {
+                        1.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        1.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        1.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        uFade / 255.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                    };
+                    imageAtt.SetColorMatrix(&colorMatrix, Gdiplus::ColorMatrixFlagsDefault, Gdiplus::ColorAdjustTypeBitmap);
+                }
 
-			Gdiplus::Matrix matrix;
-			matrix.RotateAt(uRotate, Gdiplus::PointF(ptCenter.x, ptCenter.y));
-			g.SetTransform(&matrix);
-			g.DrawImage(image, rcDest, rcSrc.GetLeft(), rcSrc.GetTop(), rcSrc.Width, rcSrc.Height, Gdiplus::UnitPixel, &imageAtt);
-			g.ResetTransform();
-		}
-		else {
+                Gdiplus::RectF rcDest(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
+                if (rcCorner.left > 0 || rcCorner.right > 0 || rcCorner.top > 0 || rcCorner.bottom > 0) {
 
-			Gdiplus::GraphicsPath clipPath;
-			CreateRoundedRectPath(clipPath, rcDest.GetLeft(), rcDest.GetTop(), rcDest.Width, rcDest.Height, bkradius);
-			g.SetClip(&clipPath);
-			g.DrawImage(image, rcDest, rcSrc.GetLeft(), rcSrc.GetTop(), rcSrc.Width, rcSrc.Height, Gdiplus::UnitPixel, &imageAtt);
-		}
+                    int src_w = image->GetWidth();
+                    int src_h = image->GetHeight();
 
-		g.ReleaseHDC(hDC);
-	}
+                    // 计算源图中的九宫格区域
+                    int left = rcCorner.left;
+                    int top = rcCorner.top;
+                    int right = rcCorner.right;
+                    int bottom = rcCorner.bottom;
 
-	void CRenderEngine::GdiplusDrawText(HDC hDC, CPaintManagerUI* pManager, RECT& rc, LPCTSTR pstrText, DWORD dwTextColor, int iFont, UINT uStyle)
+                    int center_w = src_w - left - right;
+                    int center_h = src_h - top - bottom;
+
+                    float dest_left = rcDest.X;
+                    float dest_top = rcDest.Y;
+                    float dest_right = rcDest.X + rcDest.Width;
+                    float dest_bottom = rcDest.Y + rcDest.Height;
+
+                    float dest_left_w = (float)left;
+                    float dest_top_h = (float)top;
+                    float dest_right_w = (float)right;
+                    float dest_bottom_h = (float)bottom;
+
+                    float dest_center_w = rcDest.Width - dest_left_w - dest_right_w;
+                    float dest_center_h = rcDest.Height - dest_top_h - dest_bottom_h;
+
+                    // 分别绘制 9 个区域
+                    struct Patch {
+                        Gdiplus::Rect src;
+                        Gdiplus::RectF dest;
+                    };
+
+                    std::vector<Patch> patches = {
+                        // 四个角
+                        { { 0, 0, left, top }, { dest_left, dest_top, dest_left_w, dest_top_h } }, // 左上
+                        { { left + center_w, 0, right, top }, { dest_right - dest_right_w, dest_top, dest_right_w, dest_top_h } }, // 右上
+                        { { 0, top + center_h, left, bottom }, { dest_left, dest_bottom - dest_bottom_h, dest_left_w, dest_bottom_h } }, // 左下
+                        { { left + center_w, top + center_h, right, bottom }, { dest_right - dest_right_w, dest_bottom - dest_bottom_h, dest_right_w, dest_bottom_h } }, // 右下
+
+                        // 四条边
+                        { { left, 0, center_w, top }, { dest_left + dest_left_w, dest_top, dest_center_w, dest_top_h } }, // 上边
+                        { { left, top + center_h, center_w, bottom }, { dest_left + dest_left_w, dest_bottom - dest_bottom_h, dest_center_w, dest_bottom_h } }, // 下边
+                        { { 0, top, left, center_h }, { dest_left, dest_top + dest_top_h, dest_left_w, dest_center_h } }, // 左边
+                        { { left + center_w, top, right, center_h }, { dest_right - dest_right_w, dest_top + dest_top_h, dest_right_w, dest_center_h } }, // 右边
+
+                        // 中心区域
+                        { { left, top, center_w, center_h }, { dest_left + dest_left_w, dest_top + dest_top_h, dest_center_w, dest_center_h } }, // 中心
+                    };
+
+                    for (const auto& patch : patches) {
+                        g.DrawImage(image,
+                            patch.dest,
+                            patch.src.X, patch.src.Y, patch.src.Width, patch.src.Height,
+                            Gdiplus::UnitPixel, &imageAtt);
+                    }
+
+                } else {
+                    Gdiplus::RectF rcSrc(rcBmpPart.left, rcBmpPart.top, rcBmpPart.right - rcBmpPart.left, rcBmpPart.bottom - rcBmpPart.top);
+                    if (uRotate > 0) {
+                        POINT ptCenter = { rc.left + (rc.right - rc.left) / 2, rc.top + (rc.bottom - rc.top) / 2 };
+                        int cx = rc.right - rc.left;
+                        int cy = rc.bottom - rc.top;
+
+                        Gdiplus::Matrix matrix;
+                        matrix.RotateAt(uRotate, Gdiplus::PointF(ptCenter.x, ptCenter.y));
+                        g.SetTransform(&matrix);
+                        g.DrawImage(image, rcDest, rcSrc.GetLeft(), rcSrc.GetTop(), rcSrc.Width, rcSrc.Height, Gdiplus::UnitPixel, &imageAtt);
+                        g.ResetTransform();
+                    } else {
+
+                        Gdiplus::GraphicsPath clipPath;
+                        CreateRoundedRectPath(clipPath, rcDest.GetLeft(), rcDest.GetTop(), rcDest.Width, rcDest.Height, bkradius);
+                        g.SetClip(&clipPath);
+                        g.DrawImage(image, rcDest, rcSrc.GetLeft(), rcSrc.GetTop(), rcSrc.Width, rcSrc.Height, Gdiplus::UnitPixel, &imageAtt);
+                    }
+
+                    Gdiplus::GraphicsPath clipPath;
+                    CreateRoundedRectPath(clipPath, rcDest.GetLeft(), rcDest.GetTop(), rcDest.Width, rcDest.Height, bkradius);
+                    g.SetClip(&clipPath);
+                    g.DrawImage(image, rcDest, rcSrc.GetLeft(), rcSrc.GetTop(), rcSrc.Width, rcSrc.Height, Gdiplus::UnitPixel, &imageAtt);
+                }
+            
+
+            g.ReleaseHDC(hDC);
+        }
+
+        void CRenderEngine::GdiplusDrawText(HDC hDC, CPaintManagerUI* pManager, RECT& rc, LPCTSTR pstrText, DWORD dwTextColor, int iFont, UINT uStyle)
 	{
 		ASSERT(::GetObjectType(hDC)==OBJ_DC || ::GetObjectType(hDC)==OBJ_MEMDC);
 		if( pstrText == NULL || pManager == NULL ) return;
@@ -2876,4 +3015,4 @@ namespace DuiLib {
 		return gdiplusRect;
 	}
 
-} // namespace DuiLib
+        } // namespace DuiLib
