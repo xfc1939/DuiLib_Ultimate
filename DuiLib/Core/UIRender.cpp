@@ -1264,12 +1264,13 @@ namespace DuiLib {
             RECT rcDest = rcItem;
             // �������Ŀ������
             if (pDrawInfo->rcDest.left != 0 || pDrawInfo->rcDest.top != 0 || pDrawInfo->rcDest.right != 0 || pDrawInfo->rcDest.bottom != 0) {
-                rcDest.left = rcItem.left + pDrawInfo->rcDest.left;
-                rcDest.top = rcItem.top + pDrawInfo->rcDest.top;
-                rcDest.right = rcItem.left + pDrawInfo->rcDest.right;
+				auto scale_pdrawinfo_rcdest = pManager->GetDPIObj()->Scale(pDrawInfo->rcDest);
+				rcDest.left = rcItem.left + scale_pdrawinfo_rcdest.left;
+                rcDest.top = rcItem.top + scale_pdrawinfo_rcdest.top;
+                rcDest.right = rcItem.left + scale_pdrawinfo_rcdest.right;
                 if (rcDest.right > rcItem.right)
                     rcDest.right = rcItem.right;
-                rcDest.bottom = rcItem.top + pDrawInfo->rcDest.bottom;
+                rcDest.bottom = rcItem.top + scale_pdrawinfo_rcdest.bottom;
                 if (rcDest.bottom > rcItem.bottom)
                     rcDest.bottom = rcItem.bottom;
             }
@@ -1280,8 +1281,11 @@ namespace DuiLib {
                 DuiLib::MakeImageDest(rcItem, szImage, pDrawInfo->sAlign, rcPadding, rcDest);
             }
 
+			auto scale_pdrawinfo_rcsource = pManager->GetDPIObj()->Scale(pDrawInfo->rcSource);
+			auto scale_pdrawinfo_rccorner = pManager->GetDPIObj()->Scale(pDrawInfo->rcCorner);
+
             bool bRet = DuiLib::DrawImage(hDC, pManager, rcItem, rcPaint, pDrawInfo->sImageName, pDrawInfo->sResType, rcDest,
-                pDrawInfo->rcSource, pDrawInfo->rcCorner, pDrawInfo->dwMask, pDrawInfo->uFade, pDrawInfo->uRotate, pDrawInfo->bGdiplus, pDrawInfo->bHole, pDrawInfo->bTiledX, pDrawInfo->bTiledY, instance, bkradius, cut_type);
+				scale_pdrawinfo_rcsource, scale_pdrawinfo_rccorner, pDrawInfo->dwMask, pDrawInfo->uFade, pDrawInfo->uRotate, pDrawInfo->bGdiplus, pDrawInfo->bHole, pDrawInfo->bTiledX, pDrawInfo->bTiledY, instance, bkradius, cut_type);
 
             return bRet;
         }
@@ -2119,9 +2123,9 @@ namespace DuiLib {
 		scaleTFontInfo->bUnderline = src->bUnderline;
 		scaleTFontInfo->bItalic = src->bItalic;
 		scaleTFontInfo->bStrikeout = src->bStrikeout;
-		HFONT hOldFont = (HFONT)::SelectObject(hDC, scaleTFontInfo->hFont);
+		/*HFONT hOldFont = (HFONT)::SelectObject(hDC, scaleTFontInfo->hFont);
 		::GetTextMetrics(hDC, &scaleTFontInfo->tm);
-		::SelectObject(hDC, hOldFont);
+		::SelectObject(hDC, hOldFont);*/
 		return scaleTFontInfo;
 	}
 
