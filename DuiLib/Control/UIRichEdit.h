@@ -198,6 +198,8 @@ namespace DuiLib {
 		CDuiString m_sTipValue;
 		DWORD m_dwTipValueColor;
 		UINT m_uTipValueAlign;
+		UINT m_last_scale;
+
 	};
 
 } // namespace DuiLib

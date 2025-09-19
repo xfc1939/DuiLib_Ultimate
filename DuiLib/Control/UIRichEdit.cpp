@@ -59,7 +59,7 @@ namespace DuiLib {
 		BOOL IsReadOnly();
 		void SetReadOnly(BOOL fReadOnly);
 
-		void SetFont(HFONT hFont);
+		void SetFont(HFONT hFont, float scale = 1.0);
 		void SetColor(DWORD dwColor);
 		SIZEL* GetExtent();
 		void SetExtent(SIZEL *psizelExtent);
@@ -201,7 +201,7 @@ namespace DuiLib {
 		}
 		LOGFONT lf;
 		::GetObject(hfont, sizeof(LOGFONT), &lf);
-
+		lf.lfHeight = re->GetManager()->GetDPIObj()->Scale(lf.lfHeight);
 		DWORD dwColor = re->GetTextColor();
 		if(re->GetManager()->IsLayered()) {
 			CRenderEngine::CheckAlphaColor(dwColor);
@@ -793,13 +793,13 @@ err:
 			fReadOnly ? TXTBIT_READONLY : 0);
 	}
 
-	void CTxtWinHost::SetFont(HFONT hFont) 
+	void CTxtWinHost::SetFont(HFONT hFont, float scale)
 	{
 		if( hFont == NULL ) return;
 		LOGFONT lf;
 		::GetObject(hFont, sizeof(LOGFONT), &lf);
 		LONG yPixPerInch = ::GetDeviceCaps(m_re->GetManager()->GetPaintDC(), LOGPIXELSY);
-		cf.yHeight = -lf.lfHeight * LY_PER_INCH / yPixPerInch;
+		cf.yHeight = -lf.lfHeight * LY_PER_INCH / yPixPerInch * scale;
 		if(lf.lfWeight >= FW_BOLD) cf.dwEffects |= CFE_BOLD;
 		else cf.dwEffects &= ~CFE_BOLD;
 		if(lf.lfItalic) cf.dwEffects |= CFE_ITALIC;
@@ -1084,7 +1084,7 @@ err:
 		CRichEditUI::CRichEditUI() : m_pTwh(NULL), m_bVScrollBarFixing(false), m_bWantTab(true), m_bWantReturn(true), 
 		m_bWantCtrlReturn(true), m_bTransparent(true), m_bRich(true), m_bReadOnly(false), m_bWordWrap(false), m_dwTextColor(0), m_dwDisabledTextColor(0), m_iFont(-1),
 		m_iLimitText(cInitTextMax), m_lTwhStyle(ES_MULTILINE), m_bDrawCaret(true), m_bInited(false), m_chLeadByte(0),m_uButtonState(0),
-		m_dwTipValueColor(0xFFBAC0C5), m_uTipValueAlign(DT_SINGLELINE | DT_LEFT),m_iTipFont(-1)
+		m_dwTipValueColor(0xFFBAC0C5), m_uTipValueAlign(DT_SINGLELINE | DT_LEFT),m_iTipFont(-1), m_last_scale(0)
 	{
 #ifndef _UNICODE
 		m_fAccumulateDBC =true;
@@ -2248,6 +2248,13 @@ err:
 		CControlUI::DoPaint(hDC, rcPaint, pStopControl);
 
 		if( m_pTwh ) {
+
+			auto scale = GetManager()->GetDPIObj()->Scale(1000);
+			if (m_last_scale != scale) {
+				m_last_scale = scale;
+				m_pTwh->SetFont(GetManager()->GetFont(m_iFont), m_last_scale/1000.f);
+			}
+			
 			RECT rc;
 			m_pTwh->GetControlRect(&rc);
 			// Remember wparam is actually the hdc and lparam is the update
