@@ -242,13 +242,11 @@ namespace DuiLib
 
 	void CDPI::SetPaintWindowSize(const SIZE& size)
 	{
-		std::cout << "==========>SetPaintWindowSize" << size.cx << " " << size.cy << std::endl;
 		m_paintWindowSize = size;
 	}
 
 	void CDPI::SetPaintWindowInitSize(const SIZE& size)
 	{
-		std::cout << "==========>SetPaintWindowInitSize" << size.cx <<" " << size.cy << std::endl;
 		m_paintWindowInitSize = size;
 	}
 
