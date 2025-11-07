@@ -37,6 +37,7 @@ namespace DuiLib
 		BOOL SetDPIAwareness(PROCESS_DPI_AWARENESS Awareness);
 		UINT GetDPI();
 		UINT GetScale();
+		virtual float GetNormalScale();
 		void SetScale(UINT uDPI);
 		RECT Scale(RECT rcRect);
 		void Scale(RECT *pRect);

@@ -175,10 +175,10 @@ BOOL CMenuWnd::Receive(ContextMenuParam param)
     return TRUE;
 }
 
-CMenuWnd* CMenuWnd::CreateMenu(CMenuElementUI* pOwner, STRINGorID xml, POINT point, CPaintManagerUI* pMainPaintManager, CStdStringPtrMap* pMenuCheckInfo /*= NULL*/, DWORD dwAlignment /*= eMenuAlignment_Left | eMenuAlignment_Top*/)
+CMenuWnd* CMenuWnd::CreateMenu(CMenuElementUI* pOwner, STRINGorID xml, POINT point, SIZE size, CPaintManagerUI* pMainPaintManager, CStdStringPtrMap* pMenuCheckInfo /*= NULL*/, DWORD dwAlignment /*= eMenuAlignment_Left | eMenuAlignment_Top*/)
 {
     CMenuWnd* pMenu = new CMenuWnd;
-    pMenu->Init(pOwner, xml, point, pMainPaintManager, pMenuCheckInfo, dwAlignment);
+    pMenu->Init(pOwner, xml, point, size, pMainPaintManager, pMenuCheckInfo, dwAlignment);
     return pMenu;
 }
 
@@ -219,12 +219,13 @@ MenuItemInfo* CMenuWnd::SetMenuItemInfo(LPCTSTR pstrName, bool bChecked)
     return NULL;
 }
 
-void CMenuWnd::Init(CMenuElementUI* pOwner, STRINGorID xml, POINT point,
+void CMenuWnd::Init(CMenuElementUI* pOwner, STRINGorID xml, POINT point, SIZE size,
     CPaintManagerUI* pMainPaintManager, CStdStringPtrMap* pMenuCheckInfo /* = NULL*/,
     DWORD dwAlignment /* = eMenuAlignment_Left | eMenuAlignment_Top*/)
 {
 
     m_BasedPoint = point;
+    m_BaseSize = size;
     m_pOwner = pOwner;
     m_pLayout = NULL;
     m_xml = xml;
@@ -385,7 +386,7 @@ void CMenuWnd::ResizeMenu()
 
 
 
-    SIZE szInit = m_pm.GetInitSize();
+    SIZE szInit = m_BaseSize;//m_pm.GetInitSize();
     CDuiRect rc;
     CDuiPoint point = m_BasedPoint;
     rc.left = point.x;
@@ -557,6 +558,7 @@ LRESULT CMenuWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled
         HRGN hRgn = ::CreateRoundRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom, szRoundCorner.cx, szRoundCorner.cy);
         ::SetWindowRgn(*this, hRgn, TRUE);
         ::DeleteObject(hRgn);
+        m_pm.GetDPIObj()->SetPaintWindowSize(SIZE{ rcWnd.right, rcWnd.bottom });
     }
     bHandled = FALSE;
     return 0;
@@ -1019,7 +1021,7 @@ void CMenuElementUI::CreateMenuWnd()
     param.wParam = 2;
     CMenuWnd::GetGlobalContextMenuObserver().RBroadcast(param);
 
-    m_pWindow->Init(static_cast<CMenuElementUI*>(this), _T(""), CDuiPoint(), NULL);
+    m_pWindow->Init(static_cast<CMenuElementUI*>(this), _T(""), CDuiPoint(), SIZE(), NULL);
 }
 
 void CMenuElementUI::SetLineType()

@@ -2890,7 +2890,7 @@ namespace DuiLib {
 			return m_ResInfo.m_CustomFonts.GetSize();
 	}
 
-	HFONT CPaintManagerUI::AddFont(int id, LPCTSTR pStrFontName, int nSize, bool bBold, bool bUnderline, bool bItalic, bool bStrikeout, bool bShared)
+	HFONT CPaintManagerUI::AddFont(int id, LPCTSTR pStrFontName, int nSize, bool bBold, bool bUnderline, bool bItalic, bool bStrikeout, bool bShared, bool scale )
 	{
 		LOGFONT lf = { 0 };
 		::GetObject(::GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
@@ -2900,7 +2900,10 @@ namespace DuiLib {
 			_tcsncpy(lf.lfFaceName, szFaceName, LF_FACESIZE);
 		}
 		lf.lfCharSet = DEFAULT_CHARSET;
-		lf.lfHeight = -GetDPIObj()->Scale(nSize);
+		lf.lfHeight = -nSize;
+		if (scale) {
+			lf.lfHeight = -GetDPIObj()->Scale(nSize);
+		}
 		if( bBold ) lf.lfWeight = FW_BOLD;
 		if( bUnderline ) lf.lfUnderline = TRUE;
 		if( bItalic ) lf.lfItalic = TRUE;

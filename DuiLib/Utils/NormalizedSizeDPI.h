@@ -5,5 +5,6 @@ namespace DuiLib {
 	public:
 		int Scale(int iValue) override;
 		int ScaleBack(int iValue) override;
+		float GetNormalScale() override;
 	};
 }

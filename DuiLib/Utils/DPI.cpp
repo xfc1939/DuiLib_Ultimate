@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "DPI.h"
+#include <iostream>
 #include "VersionHelpers.h"
 namespace DuiLib
 {
@@ -137,6 +138,11 @@ namespace DuiLib
 		return m_nScaleFactor;
 	}
 
+	float CDPI::GetNormalScale()
+	{
+		return 1.0f;
+	}
+
 
 	void CDPI::SetScale(UINT uDPI)
 	{
@@ -236,11 +242,13 @@ namespace DuiLib
 
 	void CDPI::SetPaintWindowSize(const SIZE& size)
 	{
+		std::cout << "==========>SetPaintWindowSize" << size.cx << " " << size.cy << std::endl;
 		m_paintWindowSize = size;
 	}
 
 	void CDPI::SetPaintWindowInitSize(const SIZE& size)
 	{
+		std::cout << "==========>SetPaintWindowInitSize" << size.cx <<" " << size.cy << std::endl;
 		m_paintWindowInitSize = size;
 	}
 

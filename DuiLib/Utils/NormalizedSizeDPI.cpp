@@ -21,6 +21,13 @@ namespace DuiLib {
 		}
 		return CDPI::ScaleBack(new_value);
 	}
+	float CNormalizedSizeDPI::GetNormalScale()
+	{
+		if (m_paintWindowInitSize.cx > 0) {
+			return m_paintWindowSize.cx / (double)m_paintWindowInitSize.cx;
+		}
+		return 1.f;
+	}
 
 	
 }

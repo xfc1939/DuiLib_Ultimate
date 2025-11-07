@@ -279,7 +279,7 @@ public:
 		static MenuObserverImpl s_context_menu_observer;
 		return s_context_menu_observer;
 	}
-	static CMenuWnd* CreateMenu(CMenuElementUI* pOwner, STRINGorID xml, POINT point,
+	static CMenuWnd* CreateMenu(CMenuElementUI* pOwner, STRINGorID xml, POINT point, SIZE size,
 		CPaintManagerUI* pMainPaintManager, CStdStringPtrMap* pMenuCheckInfo = NULL,
 		DWORD dwAlignment = eMenuAlignment_Left | eMenuAlignment_Top);
 	static void DestroyMenu();
@@ -299,7 +299,7 @@ public:
 	 *	@dwAlignment		�˵��ĳ���λ�ã�Ĭ�ϳ������������²ࡣ
 	 */
 
-    void Init(CMenuElementUI* pOwner, STRINGorID xml, POINT point,
+    void Init(CMenuElementUI* pOwner, STRINGorID xml, POINT point, SIZE size,
 		CPaintManagerUI* pMainPaintManager, CStdStringPtrMap* pMenuCheckInfo = NULL,
 		DWORD dwAlignment = eMenuAlignment_Left | eMenuAlignment_Top);
     LPCTSTR GetWindowClassName() const;
@@ -330,6 +330,7 @@ protected:
 public:
 	bool m_bCaptured;
 	POINT			m_BasedPoint;
+	SIZE			m_BaseSize;
 	STRINGorID		m_xml;
     CPaintManagerUI m_pm;
     CMenuElementUI* m_pOwner;

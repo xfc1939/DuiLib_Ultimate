@@ -939,6 +939,11 @@ namespace DuiLib
 		int d2 = MulDiv(m_rcThumb.top - m_rcItem.top, 100, GetManager()->GetDPIObj()->GetScale());
 		int d3 = MulDiv(m_rcThumb.right - m_rcItem.left, 100, GetManager()->GetDPIObj()->GetScale());
 		int d4 = MulDiv(m_rcThumb.bottom - m_rcItem.top, 100, GetManager()->GetDPIObj()->GetScale());
+		auto normal_scale = GetManager()->GetDPIObj()->GetNormalScale();
+		d1 = d1 / normal_scale;
+		d2 = d2 / normal_scale;
+		d3 = d3 / normal_scale;
+		d4 = d4 / normal_scale;
 		m_sImageModify.Empty();
 		m_sImageModify.SmallFormat(_T("dest='%d,%d,%d,%d'"), d1, d2, d3, d4);
 

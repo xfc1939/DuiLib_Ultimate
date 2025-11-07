@@ -102,8 +102,8 @@ namespace DuiLib
 		};
 		bool m_bShow;
 		bool m_bHorizontal;
-		__int64 m_nRange;
-		__int64 m_nScrollPos;
+		int m_nRange;
+		int m_nScrollPos;
 		int m_nLineSize;
 		CContainerUI* m_pOwner;
 		POINT m_ptLastMouse;
