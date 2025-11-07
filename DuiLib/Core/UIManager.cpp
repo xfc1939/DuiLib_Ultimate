@@ -702,11 +702,22 @@ namespace DuiLib {
 	{
 		m_szInitWindowSize.cx = cx;
 		m_szInitWindowSize.cy = cy;
-		GetDPIObj()->SetPaintWindowSize(m_szInitWindowSize);
-		GetDPIObj()->SetPaintWindowInitSize(m_szInitWindowSize);
-		if( m_pRoot == NULL && m_hWndPaint != NULL ) {
-			::SetWindowPos(m_hWndPaint, NULL, 0, 0, cx, cy, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+
+		CDuiRect rcWork;
+		GetWindowRect(m_hWndPaint, &rcWork);
+		auto w = rcWork.right - rcWork.left;
+		auto h = rcWork.bottom - rcWork.top;
+
+		if (w > 0 && h > 0) {
+			GetDPIObj()->SetPaintWindowSize(SIZE{ w,h });
 		}
+		else {
+			GetDPIObj()->SetPaintWindowSize(m_szInitWindowSize);
+			if (m_pRoot == NULL && m_hWndPaint != NULL) {
+				::SetWindowPos(m_hWndPaint, NULL, 0, 0, cx, cy, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+			}
+		}
+		GetDPIObj()->SetPaintWindowInitSize(m_szInitWindowSize);
 	}
 
 	RECT CPaintManagerUI::GetSizeBox()

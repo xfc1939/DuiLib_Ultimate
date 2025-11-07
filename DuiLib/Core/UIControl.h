@@ -110,6 +110,7 @@ namespace DuiLib {
 		virtual RECT GetPadding() const;
 		virtual void SetPadding(RECT rcPadding); // 设置外边距，由上层窗口绘制
 		virtual SIZE GetFixedXY() const;         // 实际大小位置使用GetPos获取，这里得到的是预设的参考值
+		virtual SIZE GetXMLFixedXY() const;      // 返回XML中设置的XY值，避免获取到DPI过的
 		virtual void SetFixedXY(SIZE szXY);      // 仅float为true时有效
 		virtual SIZE GetFixedSize() const;
 		virtual int GetFixedWidth() const;       // 实际大小位置使用GetPos获取，这里得到的是预设的参考值

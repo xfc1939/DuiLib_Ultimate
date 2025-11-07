@@ -497,6 +497,11 @@ namespace DuiLib {
 		return cXY;
 	}
 
+	SIZE CControlUI::GetXMLFixedXY() const
+	{
+		return m_cXY;
+	}
+
 	void CControlUI::SetFixedXY(SIZE szXY)
 	{
 		m_cXY.cx = szXY.cx;
